@@ -1,25 +1,23 @@
 var cols, rows;
-var w = 60;
+var w = 30;
 var grid = [];
 var current;
 var stack = [];
 var player;
+var seed = 46;
+
+function srand(seed) {
+    var t = seed += 0x6D2B79F5;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+}
 
 function setup() {
     createCanvas(600, 600);
     cols = floor(width / w);
     rows = floor(height / w);
-
-    for (var i = 0; i < rows; i++) {
-        for (var j = 0; j < cols; j++) {
-            var cell = new Cell(j, i);
-            grid.push(cell);
-        }
-    }
-    current = grid[0];
-    stack.push(current);
     generateMaze();
-    player = new Player();
 }
 
 function draw() {
@@ -28,10 +26,19 @@ function draw() {
         grid[i].show();
     }
     player.show();
-    
 }
 
 function generateMaze() {
+    grid=[]
+    for (var i = 0; i < rows; i++) {
+        for (var j = 0; j < cols; j++) {
+            var cell = new Cell(j, i);
+            grid.push(cell);
+        }
+    }
+    current = grid[0];
+    stack.push(current);
+    player = new Player();
     while (stack.length > 0) {
         current.visited = true;
         var neighbor = current.getNextNeighbor();
@@ -96,7 +103,8 @@ function Cell(r, c) {
             validNeighbors.push(left);
         }
         if (validNeighbors.length > 0) {
-            var randInt = floor(random(0, validNeighbors.length));
+            // var randInt = floor(random(0, validNeighbors.length));
+            var randInt = floor(srand(seed++) * validNeighbors.length);
             return validNeighbors[randInt];
         } else {
             return undefined;
@@ -165,4 +173,8 @@ $(document).keydown(function(e) {
             return;
     }
     e.preventDefault();
+});
+var socket = io('http://127.0.0.1:5000');
+socket.emit('connect_to_queue', {
+    some: "data"
 });
