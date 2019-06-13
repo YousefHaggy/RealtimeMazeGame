@@ -78,6 +78,7 @@ def getRoomDetails():
 	emit("start_game",message,room=request.sid)
 @socketio.on('player_position_changed')
 def playerPositionChanged(data):
+	print(str(data))
 	roomID=PLAYERS[request.sid].roomID
 	for player in ROOMS[roomID].playerList:
 		if player.playerID==request.sid:

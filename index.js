@@ -162,8 +162,8 @@ function initializeEnemies(enemyPlayerList) {
 
 function updatePlayerPosition() {
     socket.emit("player_position_changed", {
-        col: player.col,
-        row: player.row
+        'col': player.c,
+        'row': player.r
     });
 }
 //Player controls
@@ -238,11 +238,12 @@ function startGame() {
     });
     socket.on('players_updated',function(data){
         parsedData=JSON.parse(data);
+        console.log(parsedData)
         enemyPlayers.forEach(function(player)
         {
-            if (parsedData.playerID==player.playerID){
-                player.col=parsedData.col;
-                player.row=parsedData.row;
+            if (parsedData.playerID==player.id){
+                player.c=parsedData.col;
+                player.r=parsedData.row;
             }
         });
     });
