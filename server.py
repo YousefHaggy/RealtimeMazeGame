@@ -6,7 +6,7 @@ import eventlet
 import json;
 eventlet.monkey_patch()
 app= Flask(__name__)
-CORS(app)
+cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 socketio=SocketIO(app)
 ROOMS={}
 PLAYERS={}
@@ -87,7 +87,7 @@ def playerPositionChanged(data):
 			if abs(player.col-data['col']) <=1 and abs(player.row-data['row']) <=1:
 				player.col=data['col']
 				player.row=data['row']
-				if player.col==24 and player.row==24:
+				if player.col==27 and player.row==27:
 					message=json.dumps(player.serialize())
 					emit("game_won",message,room=roomID)
 					roomID=PLAYERS[request.sid].roomID

@@ -1,5 +1,5 @@
 var cols, rows;
-var w = 28;
+var w = 25;
 var grid = [];
 var current;
 var stack = [];
