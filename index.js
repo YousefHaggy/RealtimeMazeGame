@@ -5,7 +5,7 @@ var current;
 var stack = [];
 var player;
 var seed = 46;
-
+var isGameStarted=false;
 function srand(seed) {
     var t = seed += 0x6D2B79F5;
     t = Math.imul(t ^ t >>> 15, t | 1);
@@ -17,15 +17,17 @@ function setup() {
     createCanvas(600, 600);
     cols = floor(width / w);
     rows = floor(height / w);
-    generateMaze();
+    //generateMaze();
 }
 
 function draw() {
+    if(isGameStarted){
     background(147, 130, 116);
     for (var i = 0; i < grid.length; i++) {
         grid[i].show();
     }
     player.show();
+}
 }
 
 function generateMaze() {
@@ -177,4 +179,14 @@ $(document).keydown(function(e) {
 var socket = io('http://127.0.0.1:5000');
 socket.emit('connect_to_queue', {
     some: "data"
+});
+socket.on('join_room',function(msg){
+    console.log(msg);
+    socket.emit('test',{some:'data'});
+});
+socket.on('start_game',function(data){
+    console.log(data);
+    seed=JSON.parse(data).seed;
+    isGameStarted=true;
+    generateMaze()
 });
