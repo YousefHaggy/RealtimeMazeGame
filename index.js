@@ -1,5 +1,5 @@
 var cols, rows;
-var w = 25;
+var w = 28;
 var grid = [];
 var current;
 var stack = [];
@@ -16,7 +16,7 @@ function srand(seed) {
 }
 
 function setup() {
-    createCanvas(600, 600);
+    createCanvas(700, 700);
     cols = floor(width / w);
     rows = floor(height / w);
     //generateMaze();
@@ -167,7 +167,6 @@ function Player(color,id) {
         stroke('#FFFFFF')
         rect(x, y, w - 10, w - 10);
         if (player.c == cols - 1 && player.r == rows - 1) {
-            alert('win!');
         }
     }
 }
@@ -265,6 +264,19 @@ function startGame() {
             }
         });
     });
+    socket.on('game_won',function(data){
+        parsedData=JSON.parse(data);
+        enemyPlayers.forEach(function(player)
+        {
+            if (parsedData.playerID==player.id){
+                player.c=parsedData.col;
+                player.r=parsedData.row;
+            }
+        });
+        setTimeout(function(){isGameStarted=false;},500);
+        setTimeout(function(){document.location.href="";},4000);
+        console.log("WON");
+    })
     window.onbeforeunload = function() {
         socket.disconnect();
         return null;

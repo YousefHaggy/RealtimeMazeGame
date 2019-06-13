@@ -1,8 +1,10 @@
 from flask import Flask, request, jsonify
-from flask_socketio import SocketIO, join_room, leave_room, emit, rooms, send
+from flask_socketio import SocketIO, join_room, leave_room, emit, rooms, send, close_room
 from flask_cors import CORS
 import random
+import eventlet
 import json;
+eventlet.monkey_patch()
 app= Flask(__name__)
 CORS(app)
 socketio=SocketIO(app)
@@ -85,8 +87,16 @@ def playerPositionChanged(data):
 			if abs(player.col-data['col']) <=1 and abs(player.row-data['row']) <=1:
 				player.col=data['col']
 				player.row=data['row']
-			message=json.dumps(player.serialize())
-	emit("players_updated",message,room=roomID,skip_sid=request.sid)
+				if player.col==24 and player.row==24:
+					message=json.dumps(player.serialize())
+					emit("game_won",message,room=roomID)
+					roomID=PLAYERS[request.sid].roomID
+					close_room(roomID)
+					del ROOMS[roomID]
+					del PLAYERS[request.sid]
+				else:
+					message=json.dumps(player.serialize())
+					emit("players_updated",message,room=roomID,skip_sid=request.sid)
 	
 
 
