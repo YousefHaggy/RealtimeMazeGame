@@ -82,8 +82,9 @@ def playerPositionChanged(data):
 	roomID=PLAYERS[request.sid].roomID
 	for player in ROOMS[roomID].playerList:
 		if player.playerID==request.sid:
-			player.col=data['col']
-			player.row=data['row']
+			if abs(player.col-data['col']) <=1 and abs(player.row-data['row']) <=1:
+				player.col=data['col']
+				player.row=data['row']
 			message=json.dumps(player.serialize())
 	emit("players_updated",message,room=roomID,skip_sid=request.sid)
 	

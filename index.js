@@ -1,5 +1,5 @@
 var cols, rows;
-var w = 30;
+var w = 25;
 var grid = [];
 var current;
 var stack = [];
@@ -24,14 +24,15 @@ function setup() {
 
 function draw() {
     if (isGameStarted) {
-        background(147, 130, 116);
+        background('#000000');
         for (var i = 0; i < grid.length; i++) {
             grid[i].show();
         }
-        player.show();
-        enemyPlayers.forEach(function(x) {
+         enemyPlayers.forEach(function(x) {
             x.show();
         })
+        player.show();
+       
     }
 }
 
@@ -120,7 +121,7 @@ function Cell(r, c) {
     this.show = function() {
         var x = this.r * w;
         var y = this.c * w;
-        stroke(0);
+        stroke('#FFFFFF');
         //strokeWeight(8);
         if (this.walls[0]) {
             line(x, y, x + w, y);
@@ -134,6 +135,11 @@ function Cell(r, c) {
         if (this.walls[3]) {
             line(x, y + w, x, y);
         }
+        if(this.r==rows-1 && this.c==cols-1)
+        {
+            fill(0,255,0);
+            circle(x+w/2,y+w/2,w-5)
+        }
     }
 }
 
@@ -142,11 +148,23 @@ function Player(color,id) {
     this.c = 0;
     this.color = color;
     this.id=id
+     if(!color){
+            this.red=random(255);
+            this.green=random(255);
+            this.blue=random(255);
+        }
     this.show = function() {
         var x = (this.c * w) + 5;
         var y = (this.r * w) + 5;
         noStroke();
+        if(!color){
+         
+            fill(this.red,this.green,this.blue);
+        }
+        else{
         fill(this.color);
+        }
+        stroke('#FFFFFF')
         rect(x, y, w - 10, w - 10);
         if (player.c == cols - 1 && player.r == rows - 1) {
             alert('win!');
@@ -156,7 +174,7 @@ function Player(color,id) {
 
 function initializeEnemies(enemyPlayerList) {
     enemyPlayerList.forEach(function(x) {
-        enemyPlayers.push(new Player("ff0000",x.playerID));
+        enemyPlayers.push(new Player(false,x.playerID));
     })
 }
 
