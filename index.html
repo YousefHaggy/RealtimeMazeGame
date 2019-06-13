@@ -13,8 +13,14 @@
 
 
         <script type="text/javascript" src="index.js"></script>
-<style type="text/css"></style>
+        <link rel="stylesheet" tpye="text/css" href="style.css"></link>
     </head>
 </html>
-<body onload="setupGame()">
+<body>
+    <div id="start-screen">
+    <img id="logo" src="logo.png" ></img>
+    <div class="playButton" onclick="startGame()">Play</div>
+</div>
+    <h3 id="queue" style="display: none; color:white;">Waiting in queue...</h3>
+
 </body>

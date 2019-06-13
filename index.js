@@ -5,7 +5,9 @@ var current;
 var stack = [];
 var player;
 var seed = 46;
-var isGameStarted=false;
+var isGameStarted = false;
+var enemyPlayers = [];
+var socket;
 function srand(seed) {
     var t = seed += 0x6D2B79F5;
     t = Math.imul(t ^ t >>> 15, t | 1);
@@ -21,17 +23,20 @@ function setup() {
 }
 
 function draw() {
-    if(isGameStarted){
-    background(147, 130, 116);
-    for (var i = 0; i < grid.length; i++) {
-        grid[i].show();
+    if (isGameStarted) {
+        background(147, 130, 116);
+        for (var i = 0; i < grid.length; i++) {
+            grid[i].show();
+        }
+        player.show();
+        enemyPlayers.forEach(function(x) {
+            x.show();
+        })
     }
-    player.show();
-}
 }
 
 function generateMaze() {
-    grid=[]
+    grid = []
     for (var i = 0; i < rows; i++) {
         for (var j = 0; j < cols; j++) {
             var cell = new Cell(j, i);
@@ -40,7 +45,7 @@ function generateMaze() {
     }
     current = grid[0];
     stack.push(current);
-    player = new Player();
+    player = new Player('#0000FF',null);
     while (stack.length > 0) {
         current.visited = true;
         var neighbor = current.getNextNeighbor();
@@ -132,61 +137,117 @@ function Cell(r, c) {
     }
 }
 
-function Player() {
+function Player(color,id) {
     this.r = 0;
     this.c = 0;
+    this.color = color;
+    this.id=id
     this.show = function() {
         var x = (this.c * w) + 5;
         var y = (this.r * w) + 5;
         noStroke();
-        fill(0, 0, 255)
+        fill(this.color);
         rect(x, y, w - 10, w - 10);
         if (player.c == cols - 1 && player.r == rows - 1) {
             alert('win!');
         }
     }
 }
+
+function initializeEnemies(enemyPlayerList) {
+    enemyPlayerList.forEach(function(x) {
+        enemyPlayers.push(new Player("ff0000",x.playerID));
+    })
+}
+
+function updatePlayerPosition() {
+    socket.emit("player_position_changed", {
+        col: player.col,
+        row: player.row
+    });
+}
+//Player controls
 $(document).keydown(function(e) {
-    switch (e.keyCode) {
-        case 37:
-            if (!grid[index(player.r, player.c - 1)].walls[1]) {
-                player.c = player.c - 1;
-                console.log(player.c)
-            }
-            break;
-        case 38:
-            if (!grid[index(player.r - 1, player.c)].walls[2]) {
-                player.r = player.r - 1;
-                console.log(player.r)
-            }
-            break;
-        case 39:
-            if (!grid[index(player.r, player.c + 1)].walls[3]) {
-                player.c = player.c + 1;
-                console.log(player.c)
-            }
-            break;
-        case 40:
-            if (!grid[index(player.r + 1, player.c)].walls[0]) {
-                player.r = player.r + 1;
-            }
-            break;
-        default:
-            return;
+    if (isGameStarted) {
+        switch (e.keyCode) {
+            case 37:
+                if (!grid[index(player.r, player.c - 1)].walls[1]) {
+                    player.c = player.c - 1;
+                    console.log(player.c)
+                    updatePlayerPosition();
+                }
+                break;
+            case 38:
+                if (!grid[index(player.r - 1, player.c)].walls[2]) {
+                    player.r = player.r - 1;
+                    console.log(player.r)
+                    updatePlayerPosition();
+                }
+                break;
+            case 39:
+                if (!grid[index(player.r, player.c + 1)].walls[3]) {
+                    player.c = player.c + 1;
+                    console.log(player.c)
+                    updatePlayerPosition();
+
+                }
+                break;
+            case 40:
+                if (!grid[index(player.r + 1, player.c)].walls[0]) {
+                    player.r = player.r + 1;
+                    updatePlayerPosition();
+
+                }
+                break;
+            default:
+                return;
+        }
+        e.preventDefault();
     }
-    e.preventDefault();
 });
-var socket = io('http://127.0.0.1:5000');
-socket.emit('connect_to_queue', {
-    some: "data"
-});
-socket.on('join_room',function(msg){
-    console.log(msg);
-    socket.emit('test',{some:'data'});
-});
-socket.on('start_game',function(data){
-    console.log(data);
-    seed=JSON.parse(data).seed;
-    isGameStarted=true;
-    generateMaze()
-});
+//Server stuff
+function startGame() {
+     socket = io('http://127.0.0.1:5000');
+
+
+    document.getElementById("start-screen").style.display = "none";
+    document.getElementsByTagName("canvas")[0].style.display = "block";
+    document.getElementById("queue").style.display = "block";
+    socket.on('join_room', function(msg) {
+
+        console.log(msg);
+
+        socket.emit('test', {
+            some: 'data'
+        });
+
+    });
+
+    socket.on('room_found', function() {
+        console.log("ROOMFOUND")
+        socket.emit('get_room_details');
+    })
+    socket.on('start_game', function(data) {
+        console.log(data);
+        seed = JSON.parse(data).seed;
+        var enemyPlayerList = JSON.parse(data).playerList;
+        isGameStarted = true;
+        initializeEnemies(enemyPlayerList);
+        generateMaze()
+        document.getElementById("queue").style.display = "none";
+    });
+    socket.on('players_updated',function(data){
+        parsedData=JSON.parse(data);
+        enemyPlayers.forEach(function(player)
+        {
+            if (parsedData.playerID==player.playerID){
+                player.col=parsedData.col;
+                player.row=parsedData.row;
+            }
+        });
+    });
+    window.onbeforeunload = function() {
+        socket.disconnect();
+        return null;
+    }
+}
