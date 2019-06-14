@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_socketio import SocketIO, join_room, leave_room, emit, rooms, send, close_room
 from flask_cors import CORS
 import random
@@ -41,7 +41,9 @@ class Room():
 		'gameOver':self.gameOver,
 		'seed':self.seed
 		}
-
+@app.route("/")
+def index():
+	return render_template('index.html')
 @socketio.on('connect')
 def handleConnect():
 	PLAYERS[request.sid]=Player(0,0,request.sid)
