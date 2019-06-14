@@ -224,7 +224,7 @@ $(document).keydown(function(e) {
 });
 //Server stuff
 function startGame() {
-     socket = io('http://'+document.domain+':'+location.port);
+     socket = io('https://'+document.domain+':'+location.port);
 
 
     document.getElementById("start-screen").style.display = "none";
@@ -232,7 +232,7 @@ function startGame() {
     document.getElementById("queue").style.display = "block";
     socket.on('join_room', function(msg) {
 
-        console.log(msg);
+        //console.log(msg);
 
         socket.emit('test', {
             some: 'data'
@@ -241,11 +241,11 @@ function startGame() {
     });
 
     socket.on('room_found', function() {
-        console.log("ROOMFOUND")
+       // console.log("ROOMFOUND")
         socket.emit('get_room_details');
     })
     socket.on('start_game', function(data) {
-        console.log(data);
+       // console.log(data);
         seed = JSON.parse(data).seed;
         var enemyPlayerList = JSON.parse(data).playerList;
         isGameStarted = true;
@@ -255,7 +255,7 @@ function startGame() {
     });
     socket.on('players_updated',function(data){
         parsedData=JSON.parse(data);
-        console.log(parsedData)
+      //  console.log(parsedData)
         enemyPlayers.forEach(function(player)
         {
             if (parsedData.playerID==player.id){
