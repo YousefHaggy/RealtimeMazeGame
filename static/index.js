@@ -7,6 +7,7 @@ var player;
 var seed = 46;
 var isGameStarted = false;
 var enemyPlayers = [];
+var playerCount=1;
 var socket;
 function srand(seed) {
     var t = seed += 0x6D2B79F5;
@@ -224,23 +225,28 @@ $(document).keydown(function(e) {
 });
 //Server stuff
 function startGame() {
-     socket = io('https://'+document.domain+':'+location.port);
-
 
     document.getElementById("start-screen").style.display = "none";
     document.getElementsByTagName("canvas")[0].style.display = "block";
     document.getElementById("queue").style.display = "block";
+    document.getElementById("playerCount").style.display = "block";
+    socket = io('//'+document.domain+':'+location.port);
+    socket.emit('entered_queue');
     socket.on('join_room', function(msg) {
 
-        //console.log(msg);
+        console.log(msg);
 
         socket.emit('test', {
             some: 'data'
         });
 
     });
-
-    socket.on('room_found', function() {
+    socket.on('room_found',function(){
+        playerCount+=1;
+        console.log("room FOUND");
+        document.getElementById("playerCount").innerHTML=playerCount+"/10";
+    })
+    socket.on('match_starting', function() {
        // console.log("ROOMFOUND")
         socket.emit('get_room_details');
     })

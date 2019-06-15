@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template
 from flask_socketio import SocketIO, join_room, leave_room, emit, rooms, send, close_room
 from flask_cors import CORS
 import random
+from threading import Timer
 import eventlet
 import json;
 eventlet.monkey_patch()
@@ -27,7 +28,7 @@ class Player():
 class Room():
 	def __init__(self,seed):
 		self.playerList=[];
-		self.gameOver=False
+		self.gameStarted=False
 		self.seed=seed;
 	def add_player(self,player):
 		self.playerList.append(player)
@@ -38,13 +39,13 @@ class Room():
 	def serialize(self,requestSID):
 		return{
 		'playerList':[player.serialize() for player in self.playerList if player.playerID != requestSID],
-		'gameOver':self.gameOver,
+		'gameStarted':self.gameStarted,
 		'seed':self.seed
 		}
 @app.route("/")
 def index():
 	return render_template('index.html')
-@socketio.on('connect')
+@socketio.on('entered_queue')
 def handleConnect():
 	PLAYERS[request.sid]=Player(0,0,request.sid)
 	matchFound=False
@@ -55,6 +56,15 @@ def handleConnect():
 			room.add_player(PLAYERS[request.sid])
 			join_room(seed)
 			emit("room_found",room=seed)
+			t= Timer(5,startGame,args=[seed],kwargs=None)
+			t.start()
+		elif room.gameStarted==False and len(room.playerList)<10:
+			matchFound=True
+			PLAYERS[request.sid].roomID=seed;
+			room.add_player(PLAYERS[request.sid])
+			join_room(seed)
+			print("MORE THAN 2")
+			emit("room_found",room=seed)
 	if not matchFound:
 		seed=random.randint(1,100000)
 		while seed in seedList:
@@ -64,6 +74,7 @@ def handleConnect():
 		room.add_player(PLAYERS[request.sid])
 		ROOMS[seed]=room;
 		join_room(seed)
+	print("new connect event")
 	emit('join_room',{'room':seed})
  
 	
@@ -82,7 +93,6 @@ def getRoomDetails():
 	emit("start_game",message,room=request.sid)
 @socketio.on('player_position_changed')
 def playerPositionChanged(data):
-	print(str(data))
 	roomID=PLAYERS[request.sid].roomID
 	for player in ROOMS[roomID].playerList:
 		if player.playerID==request.sid:
@@ -99,7 +109,10 @@ def playerPositionChanged(data):
 				else:
 					message=json.dumps(player.serialize())
 					emit("players_updated",message,room=roomID,skip_sid=request.sid)
-	
+def startGame(roomID):
+	with app.test_request_context():
+		ROOMS[roomID].gameStarted=True
+		socketio.emit("match_starting",room=roomID);	
 
 
 
