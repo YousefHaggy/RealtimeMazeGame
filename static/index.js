@@ -1,5 +1,5 @@
 var cols, rows;
-var w = 25;
+var w = 20;
 var grid = [];
 var current;
 var stack = [];
@@ -241,10 +241,10 @@ function startGame() {
         });
 
     });
-    socket.on('room_found',function(){
+    socket.on('room_found',function(data){
         playerCount+=1;
         console.log("room FOUND");
-        document.getElementById("playerCount").innerHTML=playerCount+"/10";
+        document.getElementById("playerCount").innerHTML=data+"/10";
     })
     socket.on('match_starting', function() {
        // console.log("ROOMFOUND")

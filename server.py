@@ -56,7 +56,7 @@ def handleConnect():
 			PLAYERS[request.sid].roomID=seed;
 			room.add_player(PLAYERS[request.sid])
 			join_room(seed)
-			emit("room_found",room=seed)
+			emit("room_found",len(room.playerList),room=seed)
 			t= Timer(5,startGame,args=[seed],kwargs=None)
 			t.start()
 		elif room.gameStarted==False and len(room.playerList)<10:
@@ -65,7 +65,7 @@ def handleConnect():
 			room.add_player(PLAYERS[request.sid])
 			join_room(seed)
 			print("MORE THAN 2")
-			emit("room_found",room=seed)
+			emit("room_found",len(room.playerList),room=seed)
 	if not matchFound:
 		seed=random.randint(1,100000)
 		while seed in seedList:
@@ -100,7 +100,7 @@ def playerPositionChanged(data):
 			if abs(player.col-data['col']) <=1 and abs(player.row-data['row']) <=1:
 				player.col=data['col']
 				player.row=data['row']
-				if player.col==27 and player.row==27:
+				if player.col==34 and player.row==34:
 					message=json.dumps(player.serialize())
 					emit("game_won",message,room=roomID)
 					roomID=PLAYERS[request.sid].roomID
