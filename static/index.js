@@ -9,12 +9,7 @@ var isGameStarted = false;
 var enemyPlayers = [];
 var playerCount=1;
 var socket;
-function srand(seed) {
-    var t = seed += 0x6D2B79F5;
-    t = Math.imul(t ^ t >>> 15, t | 1);
-    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-}
+
 
 function setup() {
     createCanvas(700, 700);
@@ -37,30 +32,18 @@ function draw() {
     }
 }
 
-function generateMaze() {
+function generateMaze(maze) {
     grid = []
-    for (var i = 0; i < rows; i++) {
-        for (var j = 0; j < cols; j++) {
-            var cell = new Cell(j, i);
+    for (var r = 0; r < rows; r++) {
+        for (var c = 0; c < cols; c++) {
+            var cell = new Cell(r,c);
+            cell.walls=maze[index(r,c)];
             grid.push(cell);
         }
     }
-    current = grid[0];
-    stack.push(current);
+ 
     player = new Player('#0000FF',null);
-    while (stack.length > 0) {
-        current.visited = true;
-        var neighbor = current.getNextNeighbor();
-        if (neighbor) {
-            neighbor.visited = true;
-            stack.push(current);
-            removeWall(current, neighbor);
-            current = neighbor;
-        } else if (stack.length > 0) {
-            current = stack.pop();
-            console.log("dur")
-        }
-    }
+  
 }
 
 function index(r, c) {
@@ -71,57 +54,15 @@ function index(r, c) {
     }
 }
 
-function removeWall(current, neighbor) {
-    if (current.r < neighbor.r) {
-        neighbor.walls[3] = false;
-        current.walls[1] = false;
-    } else if (current.r > neighbor.r) {
-        neighbor.walls[1] = false;
-        current.walls[3] = false;
-    }
-    if (current.c < neighbor.c) {
-        neighbor.walls[0] = false;
-        current.walls[2] = false;
-    } else if (current.c > neighbor.c) {
-        neighbor.walls[2] = false;
-        current.walls[0] = false;
-    }
-}
 
 function Cell(r, c) {
     this.r = r;
     this.c = c;
     this.walls = [true, true, true, true];
     this.visited = false;
-    this.getNextNeighbor = function() {
-        var validNeighbors = []
-        var top = grid[index(c - 1, r)];
-        var right = grid[index(c, r + 1)];
-        var bottom = grid[index(c + 1, r)];
-        var left = grid[index(c, r - 1)];
-        if (top && !top.visited) {
-            validNeighbors.push(top);
-        }
-        if (right && !right.visited) {
-            validNeighbors.push(right);
-        }
-        if (bottom && !bottom.visited) {
-            validNeighbors.push(bottom);
-        }
-        if (left && !left.visited) {
-            validNeighbors.push(left);
-        }
-        if (validNeighbors.length > 0) {
-            // var randInt = floor(random(0, validNeighbors.length));
-            var randInt = floor(srand(seed++) * validNeighbors.length);
-            return validNeighbors[randInt];
-        } else {
-            return undefined;
-        }
-    }
     this.show = function() {
-        var x = this.r * w;
-        var y = this.c * w;
+        var x = this.c * w;
+        var y = this.r * w;
         stroke('#FFFFFF');
         //strokeWeight(8);
         if (this.walls[0]) {
@@ -138,7 +79,7 @@ function Cell(r, c) {
         }
         if(this.r==rows-1 && this.c==cols-1)
         {
-            fill(0,255,0);
+            fill("#FFD700");
             circle(x+w/2,y+w/2,w-5)
         }
     }
@@ -256,7 +197,7 @@ function startGame() {
         var enemyPlayerList = JSON.parse(data).playerList;
         isGameStarted = true;
         initializeEnemies(enemyPlayerList);
-        generateMaze()
+        generateMaze(JSON.parse(data).maze)
         document.getElementById("queue").style.display = "none";
     });
     socket.on('players_updated',function(data){

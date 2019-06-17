@@ -5,6 +5,7 @@ import random
 from threading import Timer
 import eventlet
 import json;
+from gamelogic import generateMaze
 eventlet.monkey_patch()
 app= Flask(__name__)
 app.config.update(TEMPLATES_AUTO_RELOAD=True, DEBUG=True)
@@ -27,10 +28,11 @@ class Player():
 		'playerID': self.playerID
 		}
 class Room():
-	def __init__(self,seed):
+	def __init__(self,seed,maze):
 		self.playerList=[];
 		self.gameStarted=False
 		self.seed=seed;
+		self.maze=maze
 	def add_player(self,player):
 		self.playerList.append(player)
 	def remove_player(self,playerID):
@@ -41,7 +43,7 @@ class Room():
 		return{
 		'playerList':[player.serialize() for player in self.playerList if player.playerID != requestSID],
 		'gameStarted':self.gameStarted,
-		'seed':self.seed
+		'maze': [cell.walls for cell in self.maze]
 		}
 @app.route("/")
 def index():
@@ -57,7 +59,7 @@ def handleConnect():
 			room.add_player(PLAYERS[request.sid])
 			join_room(seed)
 			emit("room_found",len(room.playerList),room=seed)
-			t= Timer(5,startGame,args=[seed],kwargs=None)
+			t= Timer(1,startGame,args=[seed],kwargs=None)
 			t.start()
 		elif room.gameStarted==False and len(room.playerList)<10:
 			matchFound=True
@@ -70,7 +72,7 @@ def handleConnect():
 		seed=random.randint(1,100000)
 		while seed in seedList:
 			seed=random.randint(1,100000)
-		room=Room(seed)
+		room=Room(seed,generateMaze())
 		PLAYERS[request.sid].roomID=seed;
 		room.add_player(PLAYERS[request.sid])
 		ROOMS[seed]=room;
