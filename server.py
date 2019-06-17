@@ -8,7 +8,7 @@ import json;
 from gamelogic import generateMaze
 eventlet.monkey_patch()
 app= Flask(__name__)
-app.config.update(TEMPLATES_AUTO_RELOAD=True, DEBUG=True)
+#app.config.update(TEMPLATES_AUTO_RELOAD=True, DEBUG=True)
 cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 socketio=SocketIO(app)
 ROOMS={}
