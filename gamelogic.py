@@ -1,6 +1,6 @@
 import random
-cols=35
-rows=35
+cols=25
+rows=25
 grid=[]
 class Cell():
 	def __init__(self,row,col):
@@ -32,7 +32,7 @@ class Cell():
 		else:
 			return None
 def index(r,c):
-	if r<0 or c<0 or r>34 or c>34:
+	if r<0 or c<0 or r>rows-1 or c>cols-1:
 		return False
 	else:
 		return c + r * cols
@@ -70,3 +70,18 @@ def generateMaze():
 		else:
 			current=stack.pop()
 	return grid
+def updatePlayer(player,direction,maze):
+	currentRow=player.row
+	currentCol=player.col
+	if direction == "top":
+		if not maze[index(currentRow-1,currentCol)].walls[2] and not maze[index(currentRow,currentCol)].walls[0]:
+			player.row=player.row-1
+	elif direction== "bottom":
+		if not maze[index(currentRow+1,currentCol)].walls[0] and not maze[index(currentRow,currentCol)].walls[2]:
+			player.row=player.row+1
+	elif  direction=="left":
+		if not maze[index(currentRow,currentCol-1)].walls[1] and not maze[index(currentRow,currentCol)].walls[3]:
+			player.col=player.col-1
+	elif direction=="right":
+		if not maze[index(currentRow,currentCol+1)].walls[3] and not maze[index(currentRow,currentCol)].walls[1]:
+			player.col=player.col+1

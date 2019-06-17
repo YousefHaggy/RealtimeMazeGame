@@ -1,5 +1,5 @@
 var cols, rows;
-var w = 20;
+var w = 28;
 var grid = [];
 var current;
 var stack = [];
@@ -7,14 +7,23 @@ var player;
 var seed = 46;
 var isGameStarted = false;
 var enemyPlayers = [];
-var playerCount=1;
+var playerCount = 1;
+var canvas;
 var socket;
-
+var isReadyToFaze = false;
 
 function setup() {
-    createCanvas(700, 700);
+    mazeHeight = 700
+        /*mazeToWindowRatio=mazeHeight/$(window).height()
+        if (mazeToWindowRatio>1){
+            mazeHeight=mazeHeight/mazeToWindowRatio
+            w=w/mazeToWindowRatio
+            console.log(w)
+        }*/
+    canvas = createCanvas(mazeHeight, mazeHeight);
     cols = floor(width / w);
     rows = floor(height / w);
+
     //generateMaze();
 }
 
@@ -24,11 +33,11 @@ function draw() {
         for (var i = 0; i < grid.length; i++) {
             grid[i].show();
         }
-         enemyPlayers.forEach(function(x) {
+        enemyPlayers.forEach(function(x) {
             x.show();
         })
         player.show();
-       
+
     }
 }
 
@@ -36,14 +45,14 @@ function generateMaze(maze) {
     grid = []
     for (var r = 0; r < rows; r++) {
         for (var c = 0; c < cols; c++) {
-            var cell = new Cell(r,c);
-            cell.walls=maze[index(r,c)];
+            var cell = new Cell(r, c);
+            cell.walls = maze[index(r, c)];
             grid.push(cell);
         }
     }
- 
-    player = new Player('#0000FF',null);
-  
+
+    player = new Player('#0000FF', null);
+
 }
 
 function index(r, c) {
@@ -77,52 +86,49 @@ function Cell(r, c) {
         if (this.walls[3]) {
             line(x, y + w, x, y);
         }
-        if(this.r==rows-1 && this.c==cols-1)
-        {
+        if (this.r == rows - 1 && this.c == cols - 1) {
             fill("#FFD700");
-            circle(x+w/2,y+w/2,w-5)
+            circle(x + w / 2, y + w / 2, w - 5)
         }
     }
 }
 
-function Player(color,id) {
+function Player(color, id) {
     this.r = 0;
     this.c = 0;
     this.color = color;
-    this.id=id
-     if(!color){
-            this.red=random(255);
-            this.green=random(255);
-            this.blue=random(255);
-        }
+    this.id = id
+    if (!color) {
+        this.red = random(255);
+        this.green = random(255);
+        this.blue = random(255);
+    }
     this.show = function() {
-        var x = (this.c * w) + 5;
-        var y = (this.r * w) + 5;
+        var x = (this.c * w) + 2.5;
+        var y = (this.r * w) + 2.5;
         noStroke();
-        if(!color){
-         
-            fill(this.red,this.green,this.blue);
-        }
-        else{
-        fill(this.color);
+        if (!color) {
+
+            fill(this.red, this.green, this.blue);
+        } else {
+            alpha = 255
+            fill(0, 0, 255, alpha);
         }
         stroke('#FFFFFF')
-        rect(x, y, w - 10, w - 10);
-        if (player.c == cols - 1 && player.r == rows - 1) {
-        }
+        rect(x, y, w - 5, w - 5);
+        if (player.c == cols - 1 && player.r == rows - 1) {}
     }
 }
 
 function initializeEnemies(enemyPlayerList) {
     enemyPlayerList.forEach(function(x) {
-        enemyPlayers.push(new Player(false,x.playerID));
+        enemyPlayers.push(new Player(false, x.playerID));
     })
 }
 
-function updatePlayerPosition() {
+function updatePlayerPosition(direction) {
     socket.emit("player_position_changed", {
-        'col': player.c,
-        'row': player.r
+        'direction': direction
     });
 }
 //Player controls
@@ -130,34 +136,23 @@ $(document).keydown(function(e) {
     if (isGameStarted) {
         switch (e.keyCode) {
             case 37:
-                if (!grid[index(player.r, player.c - 1)].walls[1]) {
-                    player.c = player.c - 1;
-                    console.log(player.c)
-                    updatePlayerPosition();
-                }
+                updatePlayerPosition("left");
                 break;
             case 38:
-                if (!grid[index(player.r - 1, player.c)].walls[2]) {
-                    player.r = player.r - 1;
-                    console.log(player.r)
-                    updatePlayerPosition();
-                }
+                updatePlayerPosition("top");
+
                 break;
             case 39:
-                if (!grid[index(player.r, player.c + 1)].walls[3]) {
-                    player.c = player.c + 1;
-                    console.log(player.c)
-                    updatePlayerPosition();
 
-                }
+                updatePlayerPosition("right");
+
                 break;
             case 40:
-                if (!grid[index(player.r + 1, player.c)].walls[0]) {
-                    player.r = player.r + 1;
-                    updatePlayerPosition();
+                updatePlayerPosition("bottom");
 
-                }
                 break;
+            case 32:
+                isReadyToFaze = !isReadyToFaze
             default:
                 return;
         }
@@ -171,8 +166,12 @@ function startGame() {
     document.getElementsByTagName("canvas")[0].style.display = "block";
     document.getElementById("queue").style.display = "block";
     document.getElementById("playerCount").style.display = "block";
-    socket = io('//'+document.domain+':'+location.port);
-    socket.emit('entered_queue');
+    socket = io('//' + document.domain + ':' + location.port);
+    var name = document.getElementById("nameInput").value;
+    console.log(name);
+    socket.emit('entered_queue', {
+        'name': name
+    });
     socket.on('join_room', function(msg) {
 
         console.log(msg);
@@ -182,47 +181,59 @@ function startGame() {
         });
 
     });
-    socket.on('room_found',function(data){
-        playerCount+=1;
+    socket.on('room_found', function(data) {
+        playerCount += 1;
         console.log("room FOUND");
-        document.getElementById("playerCount").innerHTML=data+"/10";
+        document.getElementById("playerCount").innerHTML = data + "/10";
+        document.getElementById("queue").innerHTML = "Starting match..."
     })
     socket.on('match_starting', function() {
-       // console.log("ROOMFOUND")
+        // console.log("ROOMFOUND")
         socket.emit('get_room_details');
     })
     socket.on('start_game', function(data) {
-       // console.log(data);
+        // console.log(data);
         seed = JSON.parse(data).seed;
         var enemyPlayerList = JSON.parse(data).playerList;
         isGameStarted = true;
         initializeEnemies(enemyPlayerList);
         generateMaze(JSON.parse(data).maze)
-        document.getElementById("queue").style.display = "none";
+        document.getElementById("lobby-screen").style.display = "none";
     });
-    socket.on('players_updated',function(data){
-        parsedData=JSON.parse(data);
-      //  console.log(parsedData)
-        enemyPlayers.forEach(function(player)
-        {
-            if (parsedData.playerID==player.id){
-                player.c=parsedData.col;
-                player.r=parsedData.row;
+    socket.on('local_player_updated', function(data) {
+        parsedData = JSON.parse(data);
+        player.c = parsedData.col
+        player.r = parsedData.row
+    })
+    socket.on('players_updated', function(data) {
+        parsedData = JSON.parse(data);
+        //  console.log(parsedData)
+        enemyPlayers.forEach(function(player) {
+            if (parsedData.playerID == player.id) {
+                player.c = parsedData.col;
+                player.r = parsedData.row;
             }
         });
     });
-    socket.on('game_won',function(data){
-        parsedData=JSON.parse(data);
-        enemyPlayers.forEach(function(player)
-        {
-            if (parsedData.playerID==player.id){
-                player.c=parsedData.col;
-                player.r=parsedData.row;
+    socket.on('game_won', function(data) {
+        parsedData = JSON.parse(data);
+        playerName = parsedData.playerName;
+        //document.getElementsByTagName("canvas")[0].style.display = "none";
+
+        document.getElementById("win").innerHTML = playerName + " has won the game";
+        document.getElementById("win").style.display = "block";
+        enemyPlayers.forEach(function(player) {
+            if (parsedData.playerID == player.id) {
+                player.c = parsedData.col;
+                player.r = parsedData.row;
             }
         });
-        setTimeout(function(){isGameStarted=false;},500);
-        setTimeout(function(){document.location.href="";},4000);
-        console.log("WON");
+        setTimeout(function() {
+            isGameStarted = false;
+        }, 500);
+        setTimeout(function() {
+            document.location.href = "";
+        }, 4000);
     })
     window.onbeforeunload = function() {
         socket.disconnect();

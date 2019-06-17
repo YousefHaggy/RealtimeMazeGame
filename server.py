@@ -5,19 +5,20 @@ import random
 from threading import Timer
 import eventlet
 import json;
-from gamelogic import generateMaze
+from gamelogic import generateMaze, updatePlayer
 eventlet.monkey_patch()
 app= Flask(__name__)
-#app.config.update(TEMPLATES_AUTO_RELOAD=True, DEBUG=True)
+app.config.update(TEMPLATES_AUTO_RELOAD=True, DEBUG=True)
 cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 socketio=SocketIO(app)
 ROOMS={}
 PLAYERS={}
 seedList=[]
 class Player():
-	def __init__(self,col,row,playerID):
+	def __init__(self,col,row,playerID,playerName="unnamed"):
 		self.col=col
 		self.row=row
+		self.playerName=playerName
 		self.roomID='unassigned'
 		self.playerID=playerID
 	def serialize(self):
@@ -25,7 +26,8 @@ class Player():
 		'col': self.col,
 		'row': self.row,
 		'roomID': self.roomID,
-		'playerID': self.playerID
+		'playerID': self.playerID,
+		'playerName':self.playerName
 		}
 class Room():
 	def __init__(self,seed,maze):
@@ -49,8 +51,11 @@ class Room():
 def index():
 	return render_template('index.html')
 @socketio.on('entered_queue')
-def handleConnect():
-	PLAYERS[request.sid]=Player(0,0,request.sid)
+def handleConnect(data):
+	if data['name'] is "":
+		PLAYERS[request.sid]=Player(0,0,request.sid)
+	else:
+		PLAYERS[request.sid]=Player(0,0,request.sid,data['name'])
 	matchFound=False
 	for seed,room in ROOMS.items():
 		if len(room.playerList)<2:
@@ -99,19 +104,19 @@ def playerPositionChanged(data):
 	roomID=PLAYERS[request.sid].roomID
 	for player in ROOMS[roomID].playerList:
 		if player.playerID==request.sid:
-			if abs(player.col-data['col']) <=1 and abs(player.row-data['row']) <=1:
-				player.col=data['col']
-				player.row=data['row']
-				if player.col==34 and player.row==34:
-					message=json.dumps(player.serialize())
-					emit("game_won",message,room=roomID)
-					roomID=PLAYERS[request.sid].roomID
-					close_room(roomID)
-					del ROOMS[roomID]
-					del PLAYERS[request.sid]
-				else:
-					message=json.dumps(player.serialize())
-					emit("players_updated",message,room=roomID,skip_sid=request.sid)
+			updatePlayer(player,data['direction'],ROOMS[roomID].maze)
+			message=json.dumps(player.serialize())
+			emit("local_player_updated",message,room=request.sid)
+			if player.col==24 and player.row==24:
+				message=json.dumps(player.serialize())
+				emit("game_won",message,room=roomID)
+				roomID=PLAYERS[request.sid].roomID
+				close_room(roomID)
+				del ROOMS[roomID]
+				del PLAYERS[request.sid]
+			else:
+				message=json.dumps(player.serialize())
+				emit("players_updated",message,room=roomID,skip_sid=request.sid)
 def startGame(roomID):
 	with app.test_request_context():
 		ROOMS[roomID].gameStarted=True
