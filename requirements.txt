@@ -2,4 +2,4 @@ flask
 flask_socketio
 flask_cors
 eventlet
-gunicorn==18.0
+gunicorn
