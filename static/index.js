@@ -104,8 +104,8 @@ function Player(color, id) {
         this.blue = random(255);
     }
     this.show = function() {
-        var x = (this.c * w) + 2.5;
-        var y = (this.r * w) + 2.5;
+        var x = (this.c * w) + 5;
+        var y = (this.r * w) + 5;
         noStroke();
         if (!color) {
 
@@ -115,7 +115,7 @@ function Player(color, id) {
             fill(0, 0, 255, alpha);
         }
         stroke('#FFFFFF')
-        rect(x, y, w - 5, w - 5);
+        rect(x, y, w - 10, w - 10);
         if (player.c == cols - 1 && player.r == rows - 1) {}
     }
 }

@@ -89,9 +89,9 @@ input{
 	background:linear-gradient(to bottom, #ffffff 5%, #f6f6f6 100%);
 	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#f6f6f6',GradientType=0);
 	background-color:#ffffff;
-	-moz-border-radius:6px;
-	-webkit-border-radius:6px;
-	border-radius:6px;
+	-moz-border-radius:46px;
+	-webkit-border-radius:46px;
+	border-radius:46px;
 	border:1px solid #dcdcdc;
 	cursor:pointer;
 	color:#000000;
