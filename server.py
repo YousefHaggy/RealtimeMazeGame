@@ -21,7 +21,7 @@ class Player():
 		self.playerName=playerName
 		self.roomID='unassigned'
 		self.playerID=playerID
-		self.fazesLeft=50
+		self.fazesLeft=10
 		self.isAbleToFaze=False;
 	def serialize(self):
 		return{
