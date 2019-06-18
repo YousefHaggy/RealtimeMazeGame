@@ -21,13 +21,16 @@ class Player():
 		self.playerName=playerName
 		self.roomID='unassigned'
 		self.playerID=playerID
+		self.fazesLeft=50
+		self.isAbleToFaze=False;
 	def serialize(self):
 		return{
 		'col': self.col,
 		'row': self.row,
 		'roomID': self.roomID,
 		'playerID': self.playerID,
-		'playerName':self.playerName
+		'playerName':self.playerName,
+		'isAbleToFaze':self.isAbleToFaze
 		}
 class Room():
 	def __init__(self,seed,maze):
@@ -107,7 +110,7 @@ def playerPositionChanged(data):
 			updatePlayer(player,data['direction'],ROOMS[roomID].maze)
 			message=json.dumps(player.serialize())
 			emit("local_player_updated",message,room=request.sid)
-			if player.col==24 and player.row==24:
+			if player.col==39 and player.row==34:
 				message=json.dumps(player.serialize())
 				emit("game_won",message,room=roomID)
 				roomID=PLAYERS[request.sid].roomID
@@ -117,6 +120,13 @@ def playerPositionChanged(data):
 			else:
 				message=json.dumps(player.serialize())
 				emit("players_updated",message,room=roomID,skip_sid=request.sid)
+@socketio.on('spacebar')
+def onSpacebar():
+	if PLAYERS[request.sid].fazesLeft>0 and not PLAYERS[request.sid].isAbleToFaze:
+		PLAYERS[request.sid].isAbleToFaze=True
+		PLAYERS[request.sid].fazesLeft-=1
+		emit("able_to_faze",room=request.sid)
+
 def startGame(roomID):
 	with app.test_request_context():
 		ROOMS[roomID].gameStarted=True

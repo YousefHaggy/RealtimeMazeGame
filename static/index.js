@@ -1,5 +1,5 @@
 var cols, rows;
-var w = 28;
+var w = 20;
 var grid = [];
 var current;
 var stack = [];
@@ -10,7 +10,7 @@ var enemyPlayers = [];
 var playerCount = 1;
 var canvas;
 var socket;
-var isReadyToFaze = false;
+var isAbleToFaze = false;
 
 function setup() {
     mazeHeight = 700
@@ -20,7 +20,7 @@ function setup() {
             w=w/mazeToWindowRatio
             console.log(w)
         }*/
-    canvas = createCanvas(mazeHeight, mazeHeight);
+    canvas = createCanvas(800, mazeHeight);
     cols = floor(width / w);
     rows = floor(height / w);
 
@@ -98,6 +98,9 @@ function Player(color, id) {
     this.c = 0;
     this.color = color;
     this.id = id
+    this.alpha = 255
+    this.isAbleToFaze = false;
+    modifier = -1;
     if (!color) {
         this.red = random(255);
         this.green = random(255);
@@ -108,13 +111,26 @@ function Player(color, id) {
         var y = (this.r * w) + 5;
         noStroke();
         if (!color) {
-
+            stroke('#FFFFFF')
             fill(this.red, this.green, this.blue);
         } else {
-            alpha = 255
-            fill(0, 0, 255, alpha);
+            if (this.isAbleToFaze) {
+                if (this.alpha >= 255) {
+                    modifier = 1;
+                } else if (this.alpha <= 100) {
+
+                    modifier = -1;
+                }
+                this.alpha -= (10 * modifier);
+                fill(0, 0, 255, this.alpha);
+                stroke(255, 255, 255, this.alpha)
+
+            } else {
+                fill(0, 0, 255, 255);
+                stroke('#FFFFFF')
+
+            }
         }
-        stroke('#FFFFFF')
         rect(x, y, w - 10, w - 10);
         if (player.c == cols - 1 && player.r == rows - 1) {}
     }
@@ -152,7 +168,7 @@ $(document).keydown(function(e) {
 
                 break;
             case 32:
-                isReadyToFaze = !isReadyToFaze
+                socket.emit('spacebar');
             default:
                 return;
         }
@@ -200,10 +216,15 @@ function startGame() {
         generateMaze(JSON.parse(data).maze)
         document.getElementById("lobby-screen").style.display = "none";
     });
+    socket.on('able_to_faze',function(){
+        player.isAbleToFaze = !player.isAbleToFaze;
+    })
     socket.on('local_player_updated', function(data) {
         parsedData = JSON.parse(data);
         player.c = parsedData.col
         player.r = parsedData.row
+        console.log(parsedData.isAbleToFaze)
+        player.isAbleToFaze=parsedData.isAbleToFaze
     })
     socket.on('players_updated', function(data) {
         parsedData = JSON.parse(data);

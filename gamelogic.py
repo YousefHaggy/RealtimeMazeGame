@@ -1,6 +1,6 @@
 import random
-cols=25
-rows=25
+cols=40
+rows=35
 grid=[]
 class Cell():
 	def __init__(self,row,col):
@@ -76,12 +76,24 @@ def updatePlayer(player,direction,maze):
 	if direction == "top":
 		if not maze[index(currentRow-1,currentCol)].walls[2] and not maze[index(currentRow,currentCol)].walls[0]:
 			player.row=player.row-1
+		elif player.isAbleToFaze and player.row-1>0:
+			player.row=player.row-1
+			player.isAbleToFaze=False
 	elif direction== "bottom":
 		if not maze[index(currentRow+1,currentCol)].walls[0] and not maze[index(currentRow,currentCol)].walls[2]:
 			player.row=player.row+1
+		elif player.isAbleToFaze and player.row+1<rows-1:
+			player.row=player.row+1
+			player.isAbleToFaze=False
 	elif  direction=="left":
 		if not maze[index(currentRow,currentCol-1)].walls[1] and not maze[index(currentRow,currentCol)].walls[3]:
 			player.col=player.col-1
+		elif player.isAbleToFaze and player.col-1>0:
+			player.col=player.col-1
+			player.isAbleToFaze=False
 	elif direction=="right":
 		if not maze[index(currentRow,currentCol+1)].walls[3] and not maze[index(currentRow,currentCol)].walls[1]:
 			player.col=player.col+1
+		elif player.isAbleToFaze and player.col+1<cols-1:
+			player.col=player.col+1
+			player.isAbleToFaze=False
