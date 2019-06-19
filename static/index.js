@@ -10,21 +10,37 @@ var enemyPlayers = [];
 var playerCount = 1;
 var canvas;
 var socket;
-var isAbleToFaze = false;
-
+var isAbleToPhase = false;
+var phaseCount = 3;
 function setup() {
-    mazeHeight = 700
-        /*mazeToWindowRatio=mazeHeight/$(window).height()
-        if (mazeToWindowRatio>1){
-            mazeHeight=mazeHeight/mazeToWindowRatio
-            w=w/mazeToWindowRatio
-            console.log(w)
-        }*/
-    canvas = createCanvas(800, mazeHeight);
+
+    mazeHeight = 700;
+    mazeWidth = 800;
+    mazeToWindowRatio = mazeHeight / $(window).height()
+    if (mazeToWindowRatio > 1) {
+        mazeHeight = mazeHeight / mazeToWindowRatio
+        mazeWidth = mazeHeight / .875
+        w = mazeWidth / 40
+    }
+    canvas = createCanvas(mazeWidth, mazeHeight);
     cols = floor(width / w);
     rows = floor(height / w);
 
-    //generateMaze();
+}
+
+function windowResized() {
+    mazeHeight = 700;
+    mazeWidth = 800;
+    w = 20
+    mazeToWindowRatio = mazeHeight / $(window).height()
+    if (mazeToWindowRatio > 1) {
+        mazeHeight = mazeHeight / mazeToWindowRatio
+        mazeWidth = mazeHeight / .875
+        w = mazeHeight / 35
+    }
+    resizeCanvas(mazeWidth, mazeHeight);
+    fill(0, 255, 0)
+    rect(w * 39, w * 34, w, w)
 }
 
 function draw() {
@@ -69,9 +85,13 @@ function Cell(r, c) {
     this.c = c;
     this.walls = [true, true, true, true];
     this.visited = false;
+    this.x = this.c * w;
+    this.y = this.r * w;
     this.show = function() {
-        var x = this.c * w;
-        var y = this.r * w;
+        this.x = this.c * w;
+        this.y = this.r * w;
+        var x = this.x;
+        var y = this.y;
         stroke('#FFFFFF');
         //strokeWeight(8);
         if (this.walls[0]) {
@@ -99,7 +119,7 @@ function Player(color, id) {
     this.color = color;
     this.id = id
     this.alpha = 255
-    this.isAbleToFaze = false;
+    this.isAbleToPhase = false;
     modifier = -1;
     if (!color) {
         this.red = random(255);
@@ -107,14 +127,14 @@ function Player(color, id) {
         this.blue = random(255);
     }
     this.show = function() {
-        var x = (this.c * w) + 5;
-        var y = (this.r * w) + 5;
+        var x = (this.c * w) + (.25 * w);
+        var y = (this.r * w) + (.25 * w);
         noStroke();
         if (!color) {
             stroke('#FFFFFF')
             fill(this.red, this.green, this.blue);
         } else {
-            if (this.isAbleToFaze) {
+            if (this.isAbleToPhase) {
                 if (this.alpha >= 255) {
                     modifier = 1;
                 } else if (this.alpha <= 100) {
@@ -131,7 +151,7 @@ function Player(color, id) {
 
             }
         }
-        rect(x, y, w - 10, w - 10);
+        rect(x, y, w - (.5 * w), w - (.5 * w));
         if (player.c == cols - 1 && player.r == rows - 1) {}
     }
 }
@@ -204,27 +224,33 @@ function startGame() {
         document.getElementById("queue").innerHTML = "Starting match..."
     })
     socket.on('match_starting', function() {
-        // console.log("ROOMFOUND")
-        socket.emit('get_room_details');
+        console.log("ROOMFOUND")
+            // socket.emit('get_room_details');
     })
     socket.on('start_game', function(data) {
-        // console.log(data);
+        console.log(data);
         seed = JSON.parse(data).seed;
         var enemyPlayerList = JSON.parse(data).playerList;
         isGameStarted = true;
         initializeEnemies(enemyPlayerList);
         generateMaze(JSON.parse(data).maze)
         document.getElementById("lobby-screen").style.display = "none";
+        document.getElementById("phaseCount").style.display = "block";
+
     });
-    socket.on('able_to_faze',function(){
-        player.isAbleToFaze = !player.isAbleToFaze;
+    socket.on('able_to_phase', function() {
+        player.isAbleToPhase = !player.isAbleToPhase;
+        if (player.isAbleToPhase) {
+            phaseCount -= 1;
+            document.getElementById('phaseCount').innerHTML = "Phases remaining: " + phaseCount;
+        }
     })
     socket.on('local_player_updated', function(data) {
         parsedData = JSON.parse(data);
         player.c = parsedData.col
         player.r = parsedData.row
-        console.log(parsedData.isAbleToFaze)
-        player.isAbleToFaze=parsedData.isAbleToFaze
+        console.log(parsedData.isAbleToPhase)
+        player.isAbleToPhase = parsedData.isAbleToPhase
     })
     socket.on('players_updated', function(data) {
         parsedData = JSON.parse(data);
@@ -256,8 +282,7 @@ function startGame() {
             document.location.href = "";
         }, 4000);
     })
-    window.onbeforeunload = function() {
-        socket.disconnect();
-        return null;
-    }
+    $(window).on('beforeunload', function() {
+        socket.close();
+    });
 }

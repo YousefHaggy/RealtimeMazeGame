@@ -8,7 +8,7 @@ import json;
 from gamelogic import generateMaze, updatePlayer
 eventlet.monkey_patch()
 app= Flask(__name__)
-app.config.update(TEMPLATES_AUTO_RELOAD=True, DEBUG=True)
+#app.config.update(TEMPLATES_AUTO_RELOAD=True, DEBUG=True)
 cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 socketio=SocketIO(app)
 ROOMS={}
@@ -21,8 +21,8 @@ class Player():
 		self.playerName=playerName
 		self.roomID='unassigned'
 		self.playerID=playerID
-		self.fazesLeft=10
-		self.isAbleToFaze=False;
+		self.phasesLeft=3
+		self.isAbleToPhase=False;
 	def serialize(self):
 		return{
 		'col': self.col,
@@ -30,7 +30,7 @@ class Player():
 		'roomID': self.roomID,
 		'playerID': self.playerID,
 		'playerName':self.playerName,
-		'isAbleToFaze':self.isAbleToFaze
+		'isAbleToPhase':self.isAbleToPhase
 		}
 class Room():
 	def __init__(self,seed,maze):
@@ -43,7 +43,7 @@ class Room():
 	def remove_player(self,playerID):
 		for player in self.playerList:
 			if player.playerID == playerID:
-				del player
+				self.playerList.remove(player)
 	def serialize(self,requestSID):
 		return{
 		'playerList':[player.serialize() for player in self.playerList if player.playerID != requestSID],
@@ -61,14 +61,13 @@ def handleConnect(data):
 		PLAYERS[request.sid]=Player(0,0,request.sid,data['name'])
 	matchFound=False
 	for seed,room in ROOMS.items():
-		if len(room.playerList)<2:
+		if len(room.playerList)<2 and room.gameStarted==False:
 			matchFound=True
 			PLAYERS[request.sid].roomID=seed;
 			room.add_player(PLAYERS[request.sid])
 			join_room(seed)
 			emit("room_found",len(room.playerList),room=seed)
-			t= Timer(1,startGame,args=[seed],kwargs=None)
-			t.start()
+			startGame(seed)
 		elif room.gameStarted==False and len(room.playerList)<10:
 			matchFound=True
 			PLAYERS[request.sid].roomID=seed;
@@ -80,27 +79,32 @@ def handleConnect(data):
 		seed=random.randint(1,100000)
 		while seed in seedList:
 			seed=random.randint(1,100000)
+		seedList.append(seed)
 		room=Room(seed,generateMaze())
 		PLAYERS[request.sid].roomID=seed;
 		room.add_player(PLAYERS[request.sid])
 		ROOMS[seed]=room;
 		join_room(seed)
-	print("new connect event")
+	print("new connect event " +str(PLAYERS[request.sid].roomID))
 	emit('join_room',{'room':seed})
  
 	
-@socketio.on('disconnessct')
+@socketio.on('disconnect')
 def handleDisconnect():
-	roomID=PLAYERS[request.sid].roomID
-	leave_room(roomID)
-	ROOMS[roomID].remove_player(request.sid)
-	if len(ROOMS[roomID].playerList)==0:
-		del ROOMS[roomID]
-	del PLAYERS[request.sid]
+	print(ROOMS)
+	if request.sid in PLAYERS:
+		roomID=PLAYERS[request.sid].roomID
+		leave_room(roomID)
+		ROOMS[roomID].remove_player(request.sid)
+		if len(ROOMS[roomID].playerList)==0:
+			del ROOMS[roomID]
+			print(ROOMS)
+		del PLAYERS[request.sid]
 @socketio.on('get_room_details')
 def getRoomDetails():
 	roomID=PLAYERS[request.sid].roomID
 	message=json.dumps(ROOMS[roomID].serialize(request.sid))
+	print("getRoomDetails " +str(PLAYERS[request.sid].roomID))
 	emit("start_game",message,room=request.sid)
 @socketio.on('player_position_changed')
 def playerPositionChanged(data):
@@ -122,15 +126,18 @@ def playerPositionChanged(data):
 				emit("players_updated",message,room=roomID,skip_sid=request.sid)
 @socketio.on('spacebar')
 def onSpacebar():
-	if PLAYERS[request.sid].fazesLeft>0 and not PLAYERS[request.sid].isAbleToFaze:
-		PLAYERS[request.sid].isAbleToFaze=True
-		PLAYERS[request.sid].fazesLeft-=1
-		emit("able_to_faze",room=request.sid)
+	if PLAYERS[request.sid].phasesLeft>0 and not PLAYERS[request.sid].isAbleToPhase:
+		PLAYERS[request.sid].isAbleToPhase=True
+		PLAYERS[request.sid].phasesLeft-=1
+		emit("able_to_phase",room=request.sid)
 
 def startGame(roomID):
-	with app.test_request_context():
-		ROOMS[roomID].gameStarted=True
-		socketio.emit("match_starting",room=roomID);	
+	#with app.test_request_context():
+	ROOMS[roomID].gameStarted=True
+	socketio.emit("match_starting",room=roomID);
+	for player in ROOMS[roomID].playerList:
+		message=json.dumps(ROOMS[roomID].serialize(player.playerID))
+		emit("start_game",message,room=player.playerID)
 
 
 

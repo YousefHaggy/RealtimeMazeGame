@@ -6,8 +6,8 @@
             Maze Game
         </title>
         <script src="//cdnjs.cloudflare.com/ajax/libs/p5.js/0.8.0/p5.min.js" type="text/javascript"> </script>
-		<script src="//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
         <script src="//cdnjs.cloudflare.com/ajax/libs/p5.js/0.8.0/addons/p5.dom.min.js" type="text/javascript"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
         <script src="//cdnjs.cloudflare.com/ajax/libs/p5.js/0.8.0/addons/p5.sound.min.js" type="text/javascript"></script>
         <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
         <script type="text/javascript" src="{{ url_for('static', filename ='p5.play.js')}}"></script>
@@ -31,6 +31,6 @@
  <div class=".container">
      <span id="win">Player "unnamed" has won the game! Restarting...</span>
  </div>
-
+<div id="phaseCount">Phases remaining=5</div>
 
 </body>
