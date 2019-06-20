@@ -12,6 +12,9 @@ var canvas;
 var socket;
 var isAbleToPhase = false;
 var phaseCount = 3;
+var mazeWidth;
+var mazeHeight;
+
 function setup() {
 
     mazeHeight = 700;
@@ -23,6 +26,7 @@ function setup() {
         w = mazeWidth / 40
     }
     canvas = createCanvas(mazeWidth, mazeHeight);
+    canvas.parent('canvas-container');
     cols = floor(width / w);
     rows = floor(height / w);
 

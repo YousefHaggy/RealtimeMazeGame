@@ -67,13 +67,15 @@ def handleConnect(data):
 			room.add_player(PLAYERS[request.sid])
 			join_room(seed)
 			emit("room_found",len(room.playerList),room=seed)
-			startGame(seed)
+			print("In room" +str(PLAYERS[request.sid].roomID))
+			eventlet.spawn_after(3,startGame,seed)
 		elif room.gameStarted==False and len(room.playerList)<10:
 			matchFound=True
 			PLAYERS[request.sid].roomID=seed;
 			room.add_player(PLAYERS[request.sid])
 			join_room(seed)
 			print("MORE THAN 2")
+			print("In room " +str(PLAYERS[request.sid].roomID))
 			emit("room_found",len(room.playerList),room=seed)
 	if not matchFound:
 		seed=random.randint(1,100000)
@@ -132,12 +134,12 @@ def onSpacebar():
 		emit("able_to_phase",room=request.sid)
 
 def startGame(roomID):
-	#with app.test_request_context():
-	ROOMS[roomID].gameStarted=True
-	socketio.emit("match_starting",room=roomID);
-	for player in ROOMS[roomID].playerList:
-		message=json.dumps(ROOMS[roomID].serialize(player.playerID))
-		emit("start_game",message,room=player.playerID)
+	with app.test_request_context():
+		ROOMS[roomID].gameStarted=True
+		socketio.emit("match_starting",room=roomID);
+		for player in ROOMS[roomID].playerList:
+			message=json.dumps(ROOMS[roomID].serialize(player.playerID))
+			socketio.emit("start_game",message,room=player.playerID)
 
 
 
