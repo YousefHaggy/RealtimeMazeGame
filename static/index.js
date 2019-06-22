@@ -167,6 +167,26 @@ function initializeEnemies(enemyPlayerList) {
 }
 
 function updatePlayerPosition(direction) {
+    if (direction == "left") {
+        if (!grid[index(player.r, player.c - 1)].walls[1]) {
+            player.c = player.c - 1;
+        }
+    } else if (direction == "top") {
+        if (!grid[index(player.r - 1, player.c)].walls[2]) {
+            player.r = player.r - 1;
+        }
+
+    } else if (direction == "right") {
+        if (!grid[index(player.r, player.c + 1)].walls[3]) {
+            player.c = player.c + 1;
+        }
+    }
+    else if (direction=="down"){
+        if (!grid[index(player.r + 1, player.c)].walls[0]) {
+            player.r = player.r + 1;
+        }
+
+    }
     socket.emit("player_position_changed", {
         'direction': direction
     });
