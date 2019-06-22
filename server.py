@@ -91,7 +91,7 @@ def handleConnect(data):
 	emit('join_room',{'room':seed})
  
 	
-@socketio.on('disconnect')
+@socketio.on('discgonnect')
 def handleDisconnect():
 	print(ROOMS)
 	if request.sid in PLAYERS:

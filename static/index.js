@@ -172,33 +172,47 @@ function updatePlayerPosition(direction) {
     });
 }
 //Player controls
+kd.run(function() {
+    kd.tick();
+    kd.LEFT.down(function() {
+        updatePlayerPosition("left")
+    });
+
+    kd.UP.down(function() {
+        updatePlayerPosition("top")
+    });
+
+    kd.RIGHT.down(function() {
+        updatePlayerPosition("right")
+    });
+    kd.DOWN.down(function() {
+        updatePlayerPosition("bottom")
+    });
+    kd.A.down(function() {
+        updatePlayerPosition("left")
+    });
+
+    kd.W.down(function() {
+        updatePlayerPosition("top")
+    });
+
+    kd.D.down(function() {
+        updatePlayerPosition("right")
+    });
+    kd.S.down(function() {
+        updatePlayerPosition("bottom")
+    });
+});
+
 $(document).keydown(function(e) {
-    if (isGameStarted) {
-        switch (e.keyCode) {
-            case 37:
-                updatePlayerPosition("left");
-                break;
-            case 38:
-                updatePlayerPosition("top");
+    if (e.keyCode == 32) {
+        socket.emit('spacebar');
 
-                break;
-            case 39:
-
-                updatePlayerPosition("right");
-
-                break;
-            case 40:
-                updatePlayerPosition("bottom");
-
-                break;
-            case 32:
-                socket.emit('spacebar');
-            default:
-                return;
-        }
-        e.preventDefault();
     }
 });
+
+
+
 //Server stuff
 function startGame() {
 
