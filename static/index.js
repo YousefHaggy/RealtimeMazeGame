@@ -204,7 +204,7 @@ function updatePlayerPosition(direction) {
 //Player controls
 kd.run(function() {
     frameCount += 1
-    if (frameCount >= 3) {
+    if (frameCount >= 6) {
         frameCount = 0;
         kd.tick();
         kd.LEFT.down(function() {
