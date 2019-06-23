@@ -14,7 +14,7 @@ var isAbleToPhase = false;
 var phaseCount = 3;
 var mazeWidth;
 var mazeHeight;
-
+var frameCount=0;
 function setup() {
 
     mazeHeight = 700;
@@ -42,9 +42,13 @@ function windowResized() {
         mazeWidth = mazeHeight / .875
         w = mazeHeight / 35
     }
-    resizeCanvas(mazeWidth, mazeHeight);
-    fill(0, 255, 0)
-    rect(w * 39, w * 34, w, w)
+    var c= document.getElementById("defaultCanvas0");
+    c.width=mazeWidth*2;
+    c.height=mazeHeight*2;
+    c.style.width=mazeWidth+"px";
+    c.style.height=mazeHeight+"px";
+
+   
 }
 
 function draw() {
@@ -193,6 +197,9 @@ function updatePlayerPosition(direction) {
 }
 //Player controls
 kd.run(function() {
+    frameCount+=1
+    if(frameCount>=3){
+    frameCount=0;
     kd.tick();
     kd.LEFT.down(function() {
         updatePlayerPosition("left")
@@ -222,6 +229,7 @@ kd.run(function() {
     kd.S.down(function() {
         updatePlayerPosition("bottom")
     });
+}
 });
 
 $(document).keydown(function(e) {
