@@ -14,14 +14,15 @@ var isAbleToPhase = false;
 var phaseCount = 3;
 var mazeWidth;
 var mazeHeight;
-var frameCount=0;
+var frameCount = 0;
+
 function setup() {
 
     mazeHeight = 700;
     mazeWidth = 800;
-    mazeToWindowRatio = mazeHeight / $(window).height()
-    if (mazeToWindowRatio > 1) {
-        mazeHeight = mazeHeight / mazeToWindowRatio
+    mazeHeightToWindowRatio = mazeHeight / $(window).height()
+    if (mazeHeightToWindowRatio > 1) {
+        mazeHeight = mazeHeight / mazeHeightToWindowRatio
         mazeWidth = mazeHeight / .875
         w = mazeWidth / 40
     }
@@ -33,22 +34,28 @@ function setup() {
 }
 
 function windowResized() {
-    mazeHeight = 700;
-    mazeWidth = 800;
-    w = 20
-    mazeToWindowRatio = mazeHeight / $(window).height()
-    if (mazeToWindowRatio > 1) {
-        mazeHeight = mazeHeight / mazeToWindowRatio
+    mazeHeight = height;
+    mazeWidth = width;
+    //w = 20
+    mazeHeightToWindowRatio = mazeHeight / $(window).height()
+    mazeWidthToWindowRatio = mazeWidth / $(window).width()
+    if (mazeHeightToWindowRatio > 1) {
+        mazeHeight = mazeHeight / mazeHeightToWindowRatio
         mazeWidth = mazeHeight / .875
         w = mazeHeight / 35
     }
-    var c= document.getElementById("defaultCanvas0");
-    c.width=mazeWidth*2;
-    c.height=mazeHeight*2;
-    c.style.width=mazeWidth+"px";
-    c.style.height=mazeHeight+"px";
+    if (mazeWidthToWindowRatio > 1) {
+        mazeWidth = mazeWidth / mazeWidthToWindowRatio
+        mazeHeight = mazeWidth * .875
+        w = mazeHeight / 35
+    }
+    var c = document.getElementById("defaultCanvas0");
+    c.width = mazeWidth * 2;
+    c.height = mazeHeight * 2;
+    c.style.width = mazeWidth + "px";
+    c.style.height = mazeHeight + "px";
 
-   
+
 }
 
 function draw() {
@@ -184,8 +191,7 @@ function updatePlayerPosition(direction) {
         if (!grid[index(player.r, player.c + 1)].walls[3]) {
             player.c = player.c + 1;
         }
-    }
-    else if (direction=="down"){
+    } else if (direction == "down") {
         if (!grid[index(player.r + 1, player.c)].walls[0]) {
             player.r = player.r + 1;
         }
@@ -197,39 +203,39 @@ function updatePlayerPosition(direction) {
 }
 //Player controls
 kd.run(function() {
-    frameCount+=1
-    if(frameCount>=3){
-    frameCount=0;
-    kd.tick();
-    kd.LEFT.down(function() {
-        updatePlayerPosition("left")
-    });
+    frameCount += 1
+    if (frameCount >= 3) {
+        frameCount = 0;
+        kd.tick();
+        kd.LEFT.down(function() {
+            updatePlayerPosition("left")
+        });
 
-    kd.UP.down(function() {
-        updatePlayerPosition("top")
-    });
+        kd.UP.down(function() {
+            updatePlayerPosition("top")
+        });
 
-    kd.RIGHT.down(function() {
-        updatePlayerPosition("right")
-    });
-    kd.DOWN.down(function() {
-        updatePlayerPosition("bottom")
-    });
-    kd.A.down(function() {
-        updatePlayerPosition("left")
-    });
+        kd.RIGHT.down(function() {
+            updatePlayerPosition("right")
+        });
+        kd.DOWN.down(function() {
+            updatePlayerPosition("bottom")
+        });
+        kd.A.down(function() {
+            updatePlayerPosition("left")
+        });
 
-    kd.W.down(function() {
-        updatePlayerPosition("top")
-    });
+        kd.W.down(function() {
+            updatePlayerPosition("top")
+        });
 
-    kd.D.down(function() {
-        updatePlayerPosition("right")
-    });
-    kd.S.down(function() {
-        updatePlayerPosition("bottom")
-    });
-}
+        kd.D.down(function() {
+            updatePlayerPosition("right")
+        });
+        kd.S.down(function() {
+            updatePlayerPosition("bottom")
+        });
+    }
 });
 
 $(document).keydown(function(e) {
