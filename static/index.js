@@ -28,15 +28,16 @@ function setup() {
     }
     canvas = createCanvas(mazeWidth, mazeHeight);
     canvas.parent('canvas-container');
+
     cols = floor(width / w);
     rows = floor(height / w);
 
 }
 
 function windowResized() {
-    mazeHeight = height;
-    mazeWidth = width;
-    //w = 20
+    mazeHeight = 700;
+    mazeWidth = 800;
+    w = 20
     mazeHeightToWindowRatio = mazeHeight / $(window).height()
     mazeWidthToWindowRatio = mazeWidth / $(window).width()
     if (mazeHeightToWindowRatio > 1) {
@@ -54,6 +55,8 @@ function windowResized() {
     c.height = mazeHeight * 2;
     c.style.width = mazeWidth + "px";
     c.style.height = mazeHeight + "px";
+    document.getElementById("hud").height = document.getElementById("canvas-container").clientHeight;
+    document.getElementById("hud").width = document.getElementById("canvas-container").clientWidth;
 
 
 }
@@ -284,10 +287,13 @@ function startGame() {
         seed = JSON.parse(data).seed;
         var enemyPlayerList = JSON.parse(data).playerList;
         isGameStarted = true;
+
         initializeEnemies(enemyPlayerList);
         generateMaze(JSON.parse(data).maze)
         document.getElementById("lobby-screen").style.display = "none";
         document.getElementById("phaseCount").style.display = "block";
+        document.getElementById("hud").style.display = "block";
+
 
     });
     socket.on('able_to_phase', function() {

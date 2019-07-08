@@ -22,6 +22,7 @@ class Player():
 		self.roomID='unassigned'
 		self.playerID=playerID
 		self.phasesLeft=3
+		self.score=0;
 		self.isAbleToPhase=False;
 	def serialize(self):
 		return{
@@ -38,6 +39,7 @@ class Room():
 		self.gameStarted=False
 		self.seed=seed;
 		self.maze=maze
+		self.roundsLeft=5
 	def add_player(self,player):
 		self.playerList.append(player)
 	def remove_player(self,playerID):
