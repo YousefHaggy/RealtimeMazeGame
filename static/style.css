@@ -27,10 +27,43 @@ height: 100%;
 }
 .container{
 display: flex;
-flex-direction: column;
+flex-direction: row;
 align-items: center;
 justify-content: center;
 height:100vh;
+}
+#leaderboard{
+	height: 95%;
+	width: 225px;
+	background-color: black;
+	border-style: solid;
+	border-color: white;
+	border-width: 5px;
+	font-family:Arial;
+	font-weight:bold;
+	color: white;
+	padding: 5px;
+}
+.leaderboard-entry{
+	display: inline-flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: flex-start;
+	height:50px;
+	width: 100%;
+}
+.flex-row{
+	margin-top: 5px;
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	width: 100%;
+}
+.player-time{
+	width: 50%;
+}
+.player-score{
+	width: 50%;
 }
 #queue, #playerCount{
 	font-family:Arial;

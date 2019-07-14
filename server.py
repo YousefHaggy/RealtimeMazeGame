@@ -6,6 +6,7 @@ from threading import Timer
 import eventlet
 import json;
 from gamelogic import generateMaze, updatePlayer
+from datetime import datetime
 eventlet.monkey_patch()
 app= Flask(__name__)
 #app.config.update(TEMPLATES_AUTO_RELOAD=True, DEBUG=True)
@@ -21,7 +22,7 @@ class Player():
 		self.playerName=playerName
 		self.roomID='unassigned'
 		self.playerID=playerID
-		self.phasesLeft=3
+		self.phasesLeft=15
 		self.score=0;
 		self.isAbleToPhase=False;
 	def serialize(self):
@@ -40,6 +41,7 @@ class Room():
 		self.seed=seed;
 		self.maze=maze
 		self.roundsLeft=5
+		self.roundStartTime=datetime.utcnow();
 	def add_player(self,player):
 		self.playerList.append(player)
 	def remove_player(self,playerID):

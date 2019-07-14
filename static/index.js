@@ -15,16 +15,25 @@ var phaseCount = 3;
 var mazeWidth;
 var mazeHeight;
 var frameCount = 0;
+var winningPlayerName = "";
+var hud;
 
 function setup() {
-
+    hud = new Hud();
     mazeHeight = 700;
     mazeWidth = 800;
+    w=20
     mazeHeightToWindowRatio = mazeHeight / $(window).height()
+    mazeWidthToWindowRatio = mazeWidth / $(window).width()
     if (mazeHeightToWindowRatio > 1) {
         mazeHeight = mazeHeight / mazeHeightToWindowRatio
         mazeWidth = mazeHeight / .875
-        w = mazeWidth / 40
+        w = mazeHeight / 35
+    }
+    if (mazeWidthToWindowRatio > .8) {
+        mazeWidth = $(window).width() * .8
+        mazeHeight = mazeWidth * .875
+        w = mazeHeight / 35
     }
     canvas = createCanvas(mazeWidth, mazeHeight);
     canvas.parent('canvas-container');
@@ -37,7 +46,7 @@ function setup() {
 function windowResized() {
     mazeHeight = 700;
     mazeWidth = 800;
-    w = 20
+    w=20
     mazeHeightToWindowRatio = mazeHeight / $(window).height()
     mazeWidthToWindowRatio = mazeWidth / $(window).width()
     if (mazeHeightToWindowRatio > 1) {
@@ -45,8 +54,8 @@ function windowResized() {
         mazeWidth = mazeHeight / .875
         w = mazeHeight / 35
     }
-    if (mazeWidthToWindowRatio > 1) {
-        mazeWidth = mazeWidth / mazeWidthToWindowRatio
+    if (mazeWidthToWindowRatio > .8) {
+        mazeWidth = $(window).width() * .8
         mazeHeight = mazeWidth * .875
         w = mazeHeight / 35
     }
@@ -71,7 +80,7 @@ function draw() {
             x.show();
         })
         player.show();
-
+        hud.show();
     }
 }
 
@@ -97,6 +106,16 @@ function index(r, c) {
     }
 }
 
+function Hud() {
+    fontSize = width * .5;
+    this.show = function() {
+        if (winningPlayerName != "") {
+            textSize(fontSize)
+            textAlign(CENTER, CENTER)
+            text(winningPlayerName + " has won the game", width / 2, height / 2);
+        }
+    }
+}
 
 function Cell(r, c) {
     this.r = r;
@@ -207,7 +226,7 @@ function updatePlayerPosition(direction) {
 //Player controls
 kd.run(function() {
     frameCount += 1
-    if (frameCount >= 9) {
+    if (frameCount >= 5) {
         frameCount = 0;
         kd.tick();
         kd.LEFT.down(function() {
@@ -325,8 +344,9 @@ function startGame() {
         playerName = parsedData.playerName;
         //document.getElementsByTagName("canvas")[0].style.display = "none";
 
-        document.getElementById("win").innerHTML = playerName + " has won the game";
-        document.getElementById("win").style.display = "block";
+        // document.getElementById("win").innerHTML = playerName + " has won the game";
+        //document.getElementById("win").style.display = "block";
+        winningPlayerName = playerName;
         enemyPlayers.forEach(function(player) {
             if (parsedData.playerID == player.id) {
                 player.c = parsedData.col;
