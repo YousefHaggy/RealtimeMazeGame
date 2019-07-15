@@ -6,6 +6,7 @@ var stack = [];
 var player;
 var seed = 46;
 var isGameStarted = false;
+var isRoundStarted = false;
 var enemyPlayers = [];
 var playerCount = 1;
 var canvas;
@@ -22,7 +23,7 @@ function setup() {
     hud = new Hud();
     mazeHeight = 700;
     mazeWidth = 800;
-    w=20
+    w = 20
     mazeHeightToWindowRatio = mazeHeight / $(window).height()
     mazeWidthToWindowRatio = mazeWidth / $(window).width()
     if (mazeHeightToWindowRatio > 1) {
@@ -46,7 +47,7 @@ function setup() {
 function windowResized() {
     mazeHeight = 700;
     mazeWidth = 800;
-    w=20
+    w = 20
     mazeHeightToWindowRatio = mazeHeight / $(window).height()
     mazeWidthToWindowRatio = mazeWidth / $(window).width()
     if (mazeHeightToWindowRatio > 1) {
@@ -71,7 +72,7 @@ function windowResized() {
 }
 
 function draw() {
-    if (isGameStarted) {
+    if (isGameStarted && isRoundStarted) {
         background('#000000');
         for (var i = 0; i < grid.length; i++) {
             grid[i].show();
@@ -113,6 +114,13 @@ function Hud() {
             textSize(fontSize)
             textAlign(CENTER, CENTER)
             text(winningPlayerName + " has won the game", width / 2, height / 2);
+        }
+        if (player.finishedRace) {
+            textSize(fontSize)
+            textAlign(CENTER, CENTER)
+            text("You finished the round in "+player.completedRaceTime+" seconds...", width / 2, height / 2);
+            text("Wating for other players", width / 2, (height / 2)+fontSize+5);
+
         }
     }
 }
@@ -157,6 +165,9 @@ function Player(color, id) {
     this.id = id
     this.alpha = 255
     this.isAbleToPhase = false;
+    this.finishedRace = false;
+    this.score = 0;
+    this.completedRaceTime = 0;
     modifier = -1;
     if (!color) {
         this.red = random(255);
@@ -213,7 +224,7 @@ function updatePlayerPosition(direction) {
         if (!grid[index(player.r, player.c + 1)].walls[3]) {
             player.c = player.c + 1;
         }
-    } else if (direction == "down") {
+    } else if (direction == "bottom") {
         if (!grid[index(player.r + 1, player.c)].walls[0]) {
             player.r = player.r + 1;
         }
@@ -295,8 +306,18 @@ function startGame() {
         playerCount += 1;
         console.log("room FOUND");
         document.getElementById("playerCount").innerHTML = data + "/10";
-        document.getElementById("queue").innerHTML = "Starting match..."
-    })
+        secondsRemaining = 3
+        document.getElementById("queue").innerHTML = "Starting round 1 in " + secondsRemaining;
+        startTimer = setInterval(function() {
+            if (secondsRemaining > 0) {
+                secondsRemaining -= 1;
+                document.getElementById("queue").innerHTML = "Starting round 1 in " + secondsRemaining;
+            } else {
+                clearInterval(startTimer)
+            }
+        }, 1000);
+    });
+
     socket.on('match_starting', function() {
         console.log("ROOMFOUND")
             // socket.emit('get_room_details');
@@ -306,7 +327,7 @@ function startGame() {
         seed = JSON.parse(data).seed;
         var enemyPlayerList = JSON.parse(data).playerList;
         isGameStarted = true;
-
+        isRoundStarted = true;
         initializeEnemies(enemyPlayerList);
         generateMaze(JSON.parse(data).maze)
         document.getElementById("lobby-screen").style.display = "none";
@@ -339,6 +360,10 @@ function startGame() {
             }
         });
     });
+    socket.on("finished_race", function(data) {
+        player.finishedRace = true;
+        player.completedRaceTime = data;
+    })
     socket.on('game_won', function(data) {
         parsedData = JSON.parse(data);
         playerName = parsedData.playerName;

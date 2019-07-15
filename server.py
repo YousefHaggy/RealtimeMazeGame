@@ -25,6 +25,7 @@ class Player():
 		self.phasesLeft=15
 		self.score=0;
 		self.isAbleToPhase=False;
+		self.isRacing=False;
 	def serialize(self):
 		return{
 		'col': self.col,
@@ -38,10 +39,12 @@ class Room():
 	def __init__(self,seed,maze):
 		self.playerList=[];
 		self.gameStarted=False
+		self.isRoundOnGoing=False;
 		self.seed=seed;
 		self.maze=maze
 		self.roundsLeft=5
 		self.roundStartTime=datetime.utcnow();
+
 	def add_player(self,player):
 		self.playerList.append(player)
 	def remove_player(self,playerID):
@@ -115,21 +118,27 @@ def getRoomDetails():
 @socketio.on('player_position_changed')
 def playerPositionChanged(data):
 	roomID=PLAYERS[request.sid].roomID
-	for player in ROOMS[roomID].playerList:
-		if player.playerID==request.sid:
-			updatePlayer(player,data['direction'],ROOMS[roomID].maze)
-			message=json.dumps(player.serialize())
-			emit("local_player_updated",message,room=request.sid)
-			if player.col==39 and player.row==34:
+	if ROOMS[roomID].isRoundOnGoing and ROOMS[roomID].gameStarted:
+		for player in ROOMS[roomID].playerList:
+			if player.playerID==request.sid and player.isRacing:
+				updatePlayer(player,data['direction'],ROOMS[roomID].maze)
 				message=json.dumps(player.serialize())
-				emit("game_won",message,room=roomID)
-				roomID=PLAYERS[request.sid].roomID
-				close_room(roomID)
-				del ROOMS[roomID]
-				del PLAYERS[request.sid]
-			else:
-				message=json.dumps(player.serialize())
-				emit("players_updated",message,room=roomID,skip_sid=request.sid)
+				emit("local_player_updated",message,room=request.sid)
+				if player.col==39 and player.row==34:
+					player.isRacing=False
+					raceCompletionTime=(datetime.utcnow()-ROOMS[roomID].roundStartTime).total_seconds();
+					player.score+=1000/raceCompletionTime;
+					print(round(raceCompletionTime,2))
+					emit("finished_race",str(round(raceCompletionTime,2)),room=request.sid)
+					#
+					#emit("game_won",message,room=roomID)
+					#roomID=PLAYERS[request.sid].roomID
+					#close_room(roomID)
+					#del ROOMS[roomID]
+					#del PLAYERS[request.sid]
+				else:
+					message=json.dumps(player.serialize())
+					emit("players_updated",message,room=roomID,skip_sid=request.sid)
 @socketio.on('spacebar')
 def onSpacebar():
 	if PLAYERS[request.sid].phasesLeft>0 and not PLAYERS[request.sid].isAbleToPhase:
@@ -140,8 +149,10 @@ def onSpacebar():
 def startGame(roomID):
 	with app.test_request_context():
 		ROOMS[roomID].gameStarted=True
+		ROOMS[roomID].isRoundOnGoing=True
 		socketio.emit("match_starting",room=roomID);
 		for player in ROOMS[roomID].playerList:
+			player.isRacing=True;
 			message=json.dumps(ROOMS[roomID].serialize(player.playerID))
 			socketio.emit("start_game",message,room=player.playerID)
 

@@ -5,6 +5,7 @@ canvas{
  body{
 background-color: #161c22;
 height: 100%;
+overflow-y: hidden;
 }
 @font-face{
 	font-family: maze;
