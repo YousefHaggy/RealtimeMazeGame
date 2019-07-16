@@ -33,7 +33,8 @@ class Player():
 		'roomID': self.roomID,
 		'playerID': self.playerID,
 		'playerName':self.playerName,
-		'isAbleToPhase':self.isAbleToPhase
+		'isAbleToPhase':self.isAbleToPhase,
+		'score': self.score
 		}
 class Room():
 	def __init__(self,seed,maze):
@@ -43,6 +44,7 @@ class Room():
 		self.seed=seed;
 		self.maze=maze
 		self.roundsLeft=5
+		self.playersDoneRacing=0;
 		self.roundStartTime=datetime.utcnow();
 
 	def add_player(self,player):
@@ -130,6 +132,11 @@ def playerPositionChanged(data):
 					player.score+=1000/raceCompletionTime;
 					print(round(raceCompletionTime,2))
 					emit("finished_race",str(round(raceCompletionTime,2)),room=request.sid)
+					ROOMS[roomID].playersDoneRacing+=1
+					if ROOMS[roomID].playersDoneRacing==3 or ROOMS[roomID].playersDoneRacing>=len(ROOMS[roomID].playerList):
+						ROOMS[roomID].isRoundOnGoing=False;
+						message=json.dumps(ROOMS[roomID].serialize(request.sid))
+						emit("round_over",message,room=roomID);
 					#
 					#emit("game_won",message,room=roomID)
 					#roomID=PLAYERS[request.sid].roomID

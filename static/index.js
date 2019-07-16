@@ -6,7 +6,8 @@ var stack = [];
 var player;
 var seed = 46;
 var isGameStarted = false;
-var isRoundStarted = false;
+var isRoundOngoing = false;
+var timeUntilNextRound=3;
 var enemyPlayers = [];
 var playerCount = 1;
 var canvas;
@@ -24,13 +25,13 @@ function setup() {
     mazeHeight = 700;
     mazeWidth = 800;
     w = 20
-    mazeHeightToWindowRatio = mazeHeight / $(window).height()
-    mazeWidthToWindowRatio = mazeWidth / $(window).width()
+  /*  mazeHeightToWindowRatio = mazeHeight / $(window).height()
     if (mazeHeightToWindowRatio > 1) {
         mazeHeight = mazeHeight / mazeHeightToWindowRatio
         mazeWidth = mazeHeight / .875
         w = mazeHeight / 35
-    }
+    }*/
+    mazeWidthToWindowRatio = mazeWidth / $(window).width()
     if (mazeWidthToWindowRatio > .8) {
         mazeWidth = $(window).width() * .8
         mazeHeight = mazeWidth * .875
@@ -72,7 +73,7 @@ function windowResized() {
 }
 
 function draw() {
-    if (isGameStarted && isRoundStarted) {
+    if (isGameStarted && isRoundOngoing) {
         background('#000000');
         for (var i = 0; i < grid.length; i++) {
             grid[i].show();
@@ -118,13 +119,22 @@ function Hud() {
         if (player.finishedRace) {
             textSize(fontSize)
             textAlign(CENTER, CENTER)
-            text("You finished the round in "+player.completedRaceTime+" seconds...", width / 2, height / 2);
-            text("Wating for other players", width / 2, (height / 2)+fontSize+5);
+            text("You finished the round in " + player.completedRaceTime + " seconds...", width / 2, height / 2);
+            if (isRoundOngoing)
+                text("Wating for other players", width / 2, (height / 2) + fontSize + 5);
 
+        }
+        if (!isRoundOngoing && isGameStarted) {
+            text("Rounds starts in " + timeUntilNextRound, width / 2, (height / 2) + fontSize + 5);
         }
     }
 }
-
+function roundCountDown() {
+    timeUntilNextRound -= 1;
+    if (timeUntilNextRound > 0) {
+        setTimeout(roundCountDown(), 1000);
+    }
+}
 function Cell(r, c) {
     this.r = r;
     this.c = c;
@@ -211,25 +221,25 @@ function initializeEnemies(enemyPlayerList) {
 }
 
 function updatePlayerPosition(direction) {
-    if (direction == "left") {
-        if (!grid[index(player.r, player.c - 1)].walls[1]) {
-            player.c = player.c - 1;
-        }
-    } else if (direction == "top") {
-        if (!grid[index(player.r - 1, player.c)].walls[2]) {
-            player.r = player.r - 1;
-        }
+    /* if (direction == "left") {
+         if (!grid[index(player.r, player.c - 1)].walls[1]) {
+             player.c = player.c - 1;
+         }
+     } else if (direction == "top") {
+         if (!grid[index(player.r - 1, player.c)].walls[2]) {
+             player.r = player.r - 1;
+         }
 
-    } else if (direction == "right") {
-        if (!grid[index(player.r, player.c + 1)].walls[3]) {
-            player.c = player.c + 1;
-        }
-    } else if (direction == "bottom") {
-        if (!grid[index(player.r + 1, player.c)].walls[0]) {
-            player.r = player.r + 1;
-        }
+     } else if (direction == "right") {
+         if (!grid[index(player.r, player.c + 1)].walls[3]) {
+             player.c = player.c + 1;
+         }
+     } else if (direction == "bottom") {
+         if (!grid[index(player.r + 1, player.c)].walls[0]) {
+             player.r = player.r + 1;
+         }
 
-    }
+     }*/
     socket.emit("player_position_changed", {
         'direction': direction
     });
@@ -327,7 +337,7 @@ function startGame() {
         seed = JSON.parse(data).seed;
         var enemyPlayerList = JSON.parse(data).playerList;
         isGameStarted = true;
-        isRoundStarted = true;
+        isRoundOngoing = true;
         initializeEnemies(enemyPlayerList);
         generateMaze(JSON.parse(data).maze)
         document.getElementById("lobby-screen").style.display = "none";
@@ -364,6 +374,10 @@ function startGame() {
         player.finishedRace = true;
         player.completedRaceTime = data;
     })
+    socket.on("round_over", function(data) {
+        isRoundOngoing = false;
+        setTimeout(roundCountDown(), 1000);
+    });
     socket.on('game_won', function(data) {
         parsedData = JSON.parse(data);
         playerName = parsedData.playerName;
