@@ -131,6 +131,8 @@ def playerPositionChanged(data):
 					raceCompletionTime=(datetime.utcnow()-ROOMS[roomID].roundStartTime).total_seconds();
 					player.score+=1000/raceCompletionTime;
 					print(round(raceCompletionTime,2))
+					message=json.dumps(player.serialize())
+					emit("players_updated",message,room=roomID,skip_sid=request.sid)
 					emit("finished_race",str(round(raceCompletionTime,2)),room=request.sid)
 					ROOMS[roomID].playersDoneRacing+=1
 					if ROOMS[roomID].playersDoneRacing==3 or ROOMS[roomID].playersDoneRacing>=len(ROOMS[roomID].playerList):

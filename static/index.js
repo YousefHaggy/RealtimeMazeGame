@@ -7,7 +7,7 @@ var player;
 var seed = 46;
 var isGameStarted = false;
 var isRoundOngoing = false;
-var timeUntilNextRound=3;
+var timeUntilNextRound = 3;
 var enemyPlayers = [];
 var playerCount = 1;
 var canvas;
@@ -25,19 +25,34 @@ function setup() {
     mazeHeight = 700;
     mazeWidth = 800;
     w = 20
-  /*  mazeHeightToWindowRatio = mazeHeight / $(window).height()
-    if (mazeHeightToWindowRatio > 1) {
-        mazeHeight = mazeHeight / mazeHeightToWindowRatio
-        mazeWidth = mazeHeight / .875
-        w = mazeHeight / 35
-    }*/
-    mazeWidthToWindowRatio = mazeWidth / $(window).width()
-    if (mazeWidthToWindowRatio > .8) {
-        mazeWidth = $(window).width() * .8
-        mazeHeight = mazeWidth * .875
-        w = mazeHeight / 35
+    var canvasRatio = mazeHeight / mazeWidth;
+    var windowRatio = window.innerHeight / window.innerWidth;
+    var newHeight;
+    var newWidth;
+    if (windowRatio < canvasRatio) {
+        newHeight = window.innerHeight*.95;
+        newWidth = newHeight / canvasRatio;
+        w = newHeight / 35;
+        console.log("height")
+    } else {
+        newWidth = window.innerWidth*.65;
+        newHeight = newWidth * canvasRatio;
+        w = newHeight / 35;
+        console.log("width")
     }
-    canvas = createCanvas(mazeWidth, mazeHeight);
+    /*  mazeHeightToWindowRatio = mazeHeight / $(window).height()
+      if (mazeHeightToWindowRatio > 1) {
+          mazeHeight = mazeHeight / mazeHeightToWindowRatio
+          mazeWidth = mazeHeight / .875
+          w = mazeHeight / 35
+      }
+      mazeWidthToWindowRatio = mazeWidth / $(window).width()
+      if (mazeWidthToWindowRatio > .8) {
+          mazeWidth = $(window).width() * .8
+          mazeHeight = mazeWidth * .875
+          w = mazeHeight / 35
+      }*/
+    canvas = createCanvas(newWidth, newHeight);
     canvas.parent('canvas-container');
 
     cols = floor(width / w);
@@ -49,31 +64,34 @@ function windowResized() {
     mazeHeight = 700;
     mazeWidth = 800;
     w = 20
-    mazeHeightToWindowRatio = mazeHeight / $(window).height()
-    mazeWidthToWindowRatio = mazeWidth / $(window).width()
-    if (mazeHeightToWindowRatio > 1) {
-        mazeHeight = mazeHeight / mazeHeightToWindowRatio
-        mazeWidth = mazeHeight / .875
-        w = mazeHeight / 35
-    }
-    if (mazeWidthToWindowRatio > .8) {
-        mazeWidth = $(window).width() * .8
-        mazeHeight = mazeWidth * .875
-        w = mazeHeight / 35
+    var canvasRatio = mazeHeight / mazeWidth;
+    var windowRatio = window.innerHeight / window.innerWidth;
+    var newHeight;
+    var newWidth;
+    console.log(windowRatio)
+    console.log(canvasRatio)
+    if (windowRatio < canvasRatio) {
+        newHeight = window.innerHeight*.95;
+        newWidth = newHeight / canvasRatio;
+        w = newHeight / 35;
+        console.log("height")
+    } else {
+        newWidth = window.innerWidth*.65
+        newHeight = newWidth * canvasRatio;
+        w = newHeight / 35;
     }
     var c = document.getElementById("defaultCanvas0");
-    c.width = mazeWidth * 2;
-    c.height = mazeHeight * 2;
-    c.style.width = mazeWidth + "px";
-    c.style.height = mazeHeight + "px";
-    document.getElementById("hud").height = document.getElementById("canvas-container").clientHeight;
-    document.getElementById("hud").width = document.getElementById("canvas-container").clientWidth;
-
+    c.width = newWidth * 2;
+    c.height = newHeight * 2;
+    c.style.width = newWidth + "px";
+    c.style.height = newHeight + "px";
+    redraw()
+   
 
 }
 
 function draw() {
-    if (isGameStarted && isRoundOngoing) {
+    if (isGameStarted) {
         background('#000000');
         for (var i = 0; i < grid.length; i++) {
             grid[i].show();
@@ -129,12 +147,14 @@ function Hud() {
         }
     }
 }
+
 function roundCountDown() {
     timeUntilNextRound -= 1;
     if (timeUntilNextRound > 0) {
-        setTimeout(roundCountDown(), 1000);
+        setTimeout(roundCountDown, 1000);
     }
 }
+
 function Cell(r, c) {
     this.r = r;
     this.c = c;
@@ -373,10 +393,12 @@ function startGame() {
     socket.on("finished_race", function(data) {
         player.finishedRace = true;
         player.completedRaceTime = data;
+        console.log("finished!")
     })
     socket.on("round_over", function(data) {
+        console.log("teststest");
         isRoundOngoing = false;
-        setTimeout(roundCountDown(), 1000);
+        setTimeout(roundCountDown, 1000);
     });
     socket.on('game_won', function(data) {
         parsedData = JSON.parse(data);
