@@ -70,6 +70,8 @@ def handleConnect(data):
 		PLAYERS[request.sid]=Player(0,0,request.sid,data['name'])
 	matchFound=False
 	for seed,room in ROOMS.items():
+		print(str(len(room.playerList)))
+		print(str(room.gameStarted))
 		if len(room.playerList)<2 and room.gameStarted==False:
 			matchFound=True
 			PLAYERS[request.sid].roomID=seed;

@@ -11,7 +11,8 @@ var timeUntilNextRound = 3;
 var enemyPlayers = [];
 var playerCount = 1;
 var canvas;
-var socket;
+var socket= io('//' + document.domain + ':' + location.port);
+
 var isAbleToPhase = false;
 var phaseCount = 3;
 var mazeWidth;
@@ -81,12 +82,14 @@ function windowResized() {
         w = newHeight / 35;
     }
     var c = document.getElementById("defaultCanvas0");
-    c.width = newWidth * 2;
-    c.height = newHeight * 2;
+    c.width = newWidth;
+    c.height = newHeight;
     c.style.width = newWidth + "px";
-    c.style.height = newHeight + "px";
-    redraw()
-   
+    c.style.height = newHeight + "px";  
+    canvas.width=newWidth;
+    canvas.height=newHeight;
+    clear()
+    redraw(); 
 
 }
 
@@ -317,7 +320,6 @@ function startGame() {
     document.getElementsByTagName("canvas")[0].style.display = "block";
     document.getElementById("queue").style.display = "block";
     document.getElementById("playerCount").style.display = "block";
-    socket = io('//' + document.domain + ':' + location.port);
     var name = document.getElementById("nameInput").value;
     console.log(name);
     socket.emit('entered_queue', {
