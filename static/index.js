@@ -11,7 +11,7 @@ var timeUntilNextRound = 3;
 var enemyPlayers = [];
 var playerCount = 1;
 var canvas;
-var socket = io('//' + document.domain + ':' + location.port);
+var socket = io('wss://' + document.domain + ':' + location.port);
 var localRequestID;
 var isAbleToPhase = false;
 var phaseCount = 3;
