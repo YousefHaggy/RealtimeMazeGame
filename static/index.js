@@ -122,8 +122,10 @@ function index(r, c) {
 }
 
 function Hud() {
-    fontSize = width * .5;
+    fontSize = width * .3;
     this.show = function() {
+        fill('#FFFFFF')
+        stroke('#000000')
         if (winningPlayerName != "") {
             textSize(fontSize)
             textAlign(CENTER, CENTER)
@@ -411,6 +413,7 @@ function startGame() {
     socket.on("round_over", function(data) {
         console.log("teststest");
         isRoundOngoing = false;
+        timeUntilNextRound=3;
         setTimeout(roundCountDown, 1000);
     });
     socket.on("start_next_round",function(data)
