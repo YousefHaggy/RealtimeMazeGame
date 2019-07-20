@@ -33,8 +33,10 @@ align-items: center;
 justify-content: center;
 height:100vh;
 }
+#templates{
+	display: none;
+}
 #leaderboard{
-	height: 95%;
 	width: 225px;
 	background-color: black;
 	border-style: solid;
@@ -47,10 +49,8 @@ height:100vh;
 }
 .leaderboard-entry{
 	display: inline-flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: flex-start;
-	height:50px;
+	flex-direction: row;
+	justify-content: space-between;
 	width: 100%;
 }
 .flex-row{
@@ -64,7 +64,7 @@ height:100vh;
 	width: 50%;
 }
 .player-score{
-	width: 50%;
+align-self: flex-end;
 }
 #queue, #playerCount{
 	font-family:Arial;

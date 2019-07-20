@@ -11,8 +11,8 @@ var timeUntilNextRound = 3;
 var enemyPlayers = [];
 var playerCount = 1;
 var canvas;
-var socket= io('//' + document.domain + ':' + location.port);
-
+var socket = io('//' + document.domain + ':' + location.port);
+var localRequestID;
 var isAbleToPhase = false;
 var phaseCount = 3;
 var mazeWidth;
@@ -31,33 +31,23 @@ function setup() {
     var newHeight;
     var newWidth;
     if (windowRatio < canvasRatio) {
-        newHeight = window.innerHeight*.95;
+        newHeight = window.innerHeight * .95;
         newWidth = newHeight / canvasRatio;
         w = newHeight / 35;
         console.log("height")
     } else {
-        newWidth = window.innerWidth*.65;
+        newWidth = window.innerWidth * .75;
         newHeight = newWidth * canvasRatio;
         w = newHeight / 35;
         console.log("width")
     }
-    /*  mazeHeightToWindowRatio = mazeHeight / $(window).height()
-      if (mazeHeightToWindowRatio > 1) {
-          mazeHeight = mazeHeight / mazeHeightToWindowRatio
-          mazeWidth = mazeHeight / .875
-          w = mazeHeight / 35
-      }
-      mazeWidthToWindowRatio = mazeWidth / $(window).width()
-      if (mazeWidthToWindowRatio > .8) {
-          mazeWidth = $(window).width() * .8
-          mazeHeight = mazeWidth * .875
-          w = mazeHeight / 35
-      }*/
+    //newWidth=Math.floor(newWidth);
+    //newHeight=Math.floor(newHeight);
     canvas = createCanvas(newWidth, newHeight);
     canvas.parent('canvas-container');
 
-    cols = floor(width / w);
-    rows = floor(height / w);
+    cols = 40;
+    rows = 35;
 
 }
 
@@ -72,24 +62,26 @@ function windowResized() {
     console.log(windowRatio)
     console.log(canvasRatio)
     if (windowRatio < canvasRatio) {
-        newHeight = window.innerHeight*.95;
+        newHeight = window.innerHeight * .95;
         newWidth = newHeight / canvasRatio;
         w = newHeight / 35;
         console.log("height")
     } else {
-        newWidth = window.innerWidth*.65
+        newWidth = window.innerWidth * .75
         newHeight = newWidth * canvasRatio;
         w = newHeight / 35;
     }
+    //newWidth=Math.floor(newWidth);
+    //newHeight=Math.floor(newHeight);
     var c = document.getElementById("defaultCanvas0");
     c.width = newWidth;
     c.height = newHeight;
     c.style.width = newWidth + "px";
-    c.style.height = newHeight + "px";  
-    canvas.width=newWidth;
-    canvas.height=newHeight;
+    c.style.height = newHeight + "px";
+    canvas.width = newWidth;
+    canvas.height = newHeight;
     clear()
-    redraw(); 
+    redraw();
 
 }
 
@@ -117,7 +109,7 @@ function generateMaze(maze) {
         }
     }
 
-    player = new Player('#0000FF', null);
+    player = new Player('#0000FF', localRequestID);
 
 }
 
@@ -149,6 +141,22 @@ function Hud() {
             text("Rounds starts in " + timeUntilNextRound, width / 2, (height / 2) + fontSize + 5);
         }
     }
+}
+
+function updateLeaderBoard(playerList) {
+    var leaderboard = document.getElementById("leaderboard");
+    leaderboard.innerHTML="";
+    for (var i = 0; i < playerList.length; i++) {
+        var node = document.getElementById("leaderboard-entry").cloneNode(true);
+        node.id = "entry" + playerList[i].playerName;
+        node.getElementsByTagName('div')[0].innerHTML = "#" + (i + 1) + " " + playerList[i].playerName;
+        node.getElementsByTagName('div')[1].innerHTML = "Score: "+playerList[i].score;
+        if(playerList[i].playerID==player.id){
+            node.style.color="#f7dc6f";
+        }
+        leaderboard.appendChild(node);
+    }
+
 }
 
 function roundCountDown() {
@@ -238,6 +246,7 @@ function Player(color, id) {
 }
 
 function initializeEnemies(enemyPlayerList) {
+    enemyPlayers=[];
     enemyPlayerList.forEach(function(x) {
         enemyPlayers.push(new Player(false, x.playerID));
     })
@@ -328,10 +337,8 @@ function startGame() {
     socket.on('join_room', function(msg) {
 
         console.log(msg);
-
-        socket.emit('test', {
-            some: 'data'
-        });
+        localRequestID=msg.playerID;
+    
 
     });
     socket.on('room_found', function(data) {
@@ -358,13 +365,14 @@ function startGame() {
         console.log(data);
         seed = JSON.parse(data).seed;
         var enemyPlayerList = JSON.parse(data).playerList;
+        var completePlayerList=JSON.parse(data).completePlayerList;
         isGameStarted = true;
         isRoundOngoing = true;
         initializeEnemies(enemyPlayerList);
+        console.log(enemyPlayerList);
         generateMaze(JSON.parse(data).maze)
+        updateLeaderBoard(completePlayerList)
         document.getElementById("lobby-screen").style.display = "none";
-        document.getElementById("phaseCount").style.display = "block";
-        document.getElementById("hud").style.display = "block";
 
 
     });
@@ -372,7 +380,6 @@ function startGame() {
         player.isAbleToPhase = !player.isAbleToPhase;
         if (player.isAbleToPhase) {
             phaseCount -= 1;
-            document.getElementById('phaseCount').innerHTML = "Phases remaining: " + phaseCount;
         }
     })
     socket.on('local_player_updated', function(data) {
@@ -392,6 +399,10 @@ function startGame() {
             }
         });
     });
+    socket.on("update_leaderboard",function(data){
+        var playerList=JSON.parse(data).completePlayerList;
+        updateLeaderBoard(playerList);
+    });
     socket.on("finished_race", function(data) {
         player.finishedRace = true;
         player.completedRaceTime = data;
@@ -401,6 +412,15 @@ function startGame() {
         console.log("teststest");
         isRoundOngoing = false;
         setTimeout(roundCountDown, 1000);
+    });
+    socket.on("start_next_round",function(data)
+    {
+        generateMaze(JSON.parse(data).maze)
+        isRoundOngoing=true;
+        var enemyPlayerList = JSON.parse(data).playerList;
+        var completePlayerList=JSON.parse(data).completePlayerList;
+        initializeEnemies(enemyPlayerList);
+
     });
     socket.on('game_won', function(data) {
         parsedData = JSON.parse(data);

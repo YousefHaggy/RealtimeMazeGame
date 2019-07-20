@@ -53,9 +53,10 @@ class Room():
 		for player in self.playerList:
 			if player.playerID == playerID:
 				self.playerList.remove(player)
-	def serialize(self,requestSID):
+	def serialize(self,requestSID="none"):
 		return{
 		'playerList':[player.serialize() for player in self.playerList if player.playerID != requestSID],
+		'completePlayerList':[player.serialize() for player in self.playerList],
 		'gameStarted':self.gameStarted,
 		'maze': [cell.walls for cell in self.maze]
 		}
@@ -99,7 +100,7 @@ def handleConnect(data):
 		ROOMS[seed]=room;
 		join_room(seed)
 	print("new connect event " +str(PLAYERS[request.sid].roomID))
-	emit('join_room',{'room':seed})
+	emit('join_room',{'room':seed,'playerID':request.sid})
  
 	
 @socketio.on('discgonnect')
@@ -131,16 +132,21 @@ def playerPositionChanged(data):
 				if player.col==39 and player.row==34:
 					player.isRacing=False
 					raceCompletionTime=(datetime.utcnow()-ROOMS[roomID].roundStartTime).total_seconds();
-					player.score+=1000/raceCompletionTime;
+					player.score+=round(1000/raceCompletionTime);
 					print(round(raceCompletionTime,2))
 					message=json.dumps(player.serialize())
 					emit("players_updated",message,room=roomID,skip_sid=request.sid)
+					ROOMS[roomID].playerList.sort(key= lambda x:x.score,reverse=True);
+					message=json.dumps(ROOMS[roomID].serialize())
+					emit("update_leaderboard",message,room=roomID)
 					emit("finished_race",str(round(raceCompletionTime,2)),room=request.sid)
 					ROOMS[roomID].playersDoneRacing+=1
 					if ROOMS[roomID].playersDoneRacing==3 or ROOMS[roomID].playersDoneRacing>=len(ROOMS[roomID].playerList):
 						ROOMS[roomID].isRoundOnGoing=False;
 						message=json.dumps(ROOMS[roomID].serialize(request.sid))
 						emit("round_over",message,room=roomID);
+						eventlet.spawn_after(3,startNextRound,roomID)
+
 					#
 					#emit("game_won",message,room=roomID)
 					#roomID=PLAYERS[request.sid].roomID
@@ -167,7 +173,22 @@ def startGame(roomID):
 			message=json.dumps(ROOMS[roomID].serialize(player.playerID))
 			socketio.emit("start_game",message,room=player.playerID)
 
-
+def startNextRound(roomID):
+	with app.test_request_context():
+		ROOMS[roomID].maze=generateMaze()
+		ROOMS[roomID].playersDoneRacing=0
+		ROOMS[roomID].roundsLeft-=1
+		ROOMS[roomID].roundStartTime=datetime.utcnow()
+		ROOMS[roomID].isRoundOnGoing=True
+		for player in ROOMS[roomID].playerList:
+			player.col=0;
+			player.row=0;
+			player.phasesLeft=3
+			player.isAbleToPhase=False;
+			player.isRacing=True
+		for player in ROOMS[roomID].playerList:
+			message=json.dumps(ROOMS[roomID].serialize(player.playerID))
+			socketio.emit("start_next_round",message,room=player.playerID)
 
 if __name__ =='__main__':
 	socketio.run(app)
