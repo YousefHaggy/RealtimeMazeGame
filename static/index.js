@@ -7,17 +7,18 @@ var player;
 var seed = 46;
 var isGameStarted = false;
 var isRoundOngoing = false;
-var timeUntilNextRound = 3;
+var timeUntilNextRound = 0;
 var enemyPlayers = [];
 var playerCount = 1;
 var canvas;
-var socket = io('wss://' + document.domain + ':' + location.port);
+var socket = io('ws://' + document.domain + ':' + location.port);
 var localRequestID;
 var isAbleToPhase = false;
 var phaseCount = 3;
 var mazeWidth;
 var mazeHeight;
 var frameCount = 0;
+var timeUntilRoundEndForced = 100;
 var winningPlayerName = "";
 var hud;
 
@@ -122,39 +123,44 @@ function index(r, c) {
 }
 
 function Hud() {
-    fontSize = width * .3;
     this.show = function() {
+        fontSize = canvas.width * .03;
+        textSize(fontSize)
+        textAlign(CENTER, CENTER)
+        if (winningPlayerName != "" || player.finishedRace || (!isRoundOngoing && isGameStarted)) {
+            fill(0, 0, 0, 200)
+            rect(0, 0, canvas.width, canvas.height)
+        }
         fill('#FFFFFF')
         stroke('#000000')
         if (winningPlayerName != "") {
-            textSize(fontSize)
-            textAlign(CENTER, CENTER)
-            text(winningPlayerName + " has won the game", width / 2, height / 2);
+
+            text(winningPlayerName + " has won the game", canvas.width / 2, canvas.height / 2);
         }
         if (player.finishedRace) {
-            textSize(fontSize)
-            textAlign(CENTER, CENTER)
-            text("You finished the round in " + player.completedRaceTime + " seconds...", width / 2, height / 2);
-            if (isRoundOngoing)
-                text("Wating for other players", width / 2, (height / 2) + fontSize + 5);
+
+            text("You finished the round in " + player.completedRaceTime + " seconds...", canvas.width / 2, canvas.height / 2);
+            if (isRoundOngoing) {
+                text("Wating for other players... " + timeUntilRoundEndForced + " seconds", canvas.width / 2, (canvas.height / 2) + fontSize + 5);
+            }
 
         }
         if (!isRoundOngoing && isGameStarted) {
-            text("Rounds starts in " + timeUntilNextRound, width / 2, (height / 2) + fontSize + 5);
+            text("Next Rounds starts in " + timeUntilNextRound, canvas.width / 2, (canvas.height / 2) + fontSize + 5);
         }
     }
 }
 
 function updateLeaderBoard(playerList) {
     var leaderboard = document.getElementById("leaderboard");
-    leaderboard.innerHTML="";
+    leaderboard.innerHTML = "";
     for (var i = 0; i < playerList.length; i++) {
         var node = document.getElementById("leaderboard-entry").cloneNode(true);
         node.id = "entry" + playerList[i].playerName;
         node.getElementsByTagName('div')[0].innerHTML = "#" + (i + 1) + " " + playerList[i].playerName;
-        node.getElementsByTagName('div')[1].innerHTML = "Score: "+playerList[i].score;
-        if(playerList[i].playerID==player.id){
-            node.style.color="#f7dc6f";
+        node.getElementsByTagName('div')[1].innerHTML = "Score: " + playerList[i].score;
+        if (playerList[i].playerID == player.id) {
+            node.style.color = "#f7dc6f";
         }
         leaderboard.appendChild(node);
     }
@@ -165,6 +171,13 @@ function roundCountDown() {
     timeUntilNextRound -= 1;
     if (timeUntilNextRound > 0) {
         setTimeout(roundCountDown, 1000);
+    }
+}
+
+function roundEndCountDown() {
+    timeUntilRoundEndForced -= 1;
+    if (timeUntilRoundEndForced > 0) {
+        setTimeout(roundEndCountDown, 1000);
     }
 }
 
@@ -248,7 +261,7 @@ function Player(color, id) {
 }
 
 function initializeEnemies(enemyPlayerList) {
-    enemyPlayers=[];
+    enemyPlayers = [];
     enemyPlayerList.forEach(function(x) {
         enemyPlayers.push(new Player(false, x.playerID));
     })
@@ -339,8 +352,8 @@ function startGame() {
     socket.on('join_room', function(msg) {
 
         console.log(msg);
-        localRequestID=msg.playerID;
-    
+        localRequestID = msg.playerID;
+
 
     });
     socket.on('room_found', function(data) {
@@ -367,7 +380,7 @@ function startGame() {
         console.log(data);
         seed = JSON.parse(data).seed;
         var enemyPlayerList = JSON.parse(data).playerList;
-        var completePlayerList=JSON.parse(data).completePlayerList;
+        var completePlayerList = JSON.parse(data).completePlayerList;
         isGameStarted = true;
         isRoundOngoing = true;
         initializeEnemies(enemyPlayerList);
@@ -375,7 +388,8 @@ function startGame() {
         generateMaze(JSON.parse(data).maze)
         updateLeaderBoard(completePlayerList)
         document.getElementById("lobby-screen").style.display = "none";
-
+        timeUntilRoundEndForced = 100;
+        setTimeout(roundEndCountDown, 1000);
 
     });
     socket.on('able_to_phase', function() {
@@ -401,8 +415,8 @@ function startGame() {
             }
         });
     });
-    socket.on("update_leaderboard",function(data){
-        var playerList=JSON.parse(data).completePlayerList;
+    socket.on("update_leaderboard", function(data) {
+        var playerList = JSON.parse(data).completePlayerList;
         updateLeaderBoard(playerList);
     });
     socket.on("finished_race", function(data) {
@@ -413,15 +427,15 @@ function startGame() {
     socket.on("round_over", function(data) {
         console.log("teststest");
         isRoundOngoing = false;
-        timeUntilNextRound=3;
+        timeUntilNextRound = 3;
         setTimeout(roundCountDown, 1000);
     });
-    socket.on("start_next_round",function(data)
-    {
+    socket.on("start_next_round", function(data) {
         generateMaze(JSON.parse(data).maze)
-        isRoundOngoing=true;
+        isRoundOngoing = true;
+        timeUntilRoundEndForced = 100;
         var enemyPlayerList = JSON.parse(data).playerList;
-        var completePlayerList=JSON.parse(data).completePlayerList;
+        var completePlayerList = JSON.parse(data).completePlayerList;
         initializeEnemies(enemyPlayerList);
 
     });

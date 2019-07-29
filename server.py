@@ -46,6 +46,7 @@ class Room():
 		self.roundsLeft=5
 		self.playersDoneRacing=0;
 		self.roundStartTime=datetime.utcnow();
+		self.roundEndTimer=None;
 
 	def add_player(self,player):
 		self.playerList.append(player)
@@ -145,6 +146,7 @@ def playerPositionChanged(data):
 						ROOMS[roomID].isRoundOnGoing=False;
 						message=json.dumps(ROOMS[roomID].serialize(request.sid))
 						emit("round_over",message,room=roomID);
+						ROOMS[roomID].roundEndTimer.cancel()
 						eventlet.spawn_after(3,startNextRound,roomID)
 
 					#
@@ -172,7 +174,7 @@ def startGame(roomID):
 			player.isRacing=True;
 			message=json.dumps(ROOMS[roomID].serialize(player.playerID))
 			socketio.emit("start_game",message,room=player.playerID)
-
+		ROOMS[roomID].roundEndTimer=eventlet.spawn_after(100,forceRoundEnd,roomID)
 def startNextRound(roomID):
 	with app.test_request_context():
 		ROOMS[roomID].maze=generateMaze()
@@ -189,6 +191,13 @@ def startNextRound(roomID):
 		for player in ROOMS[roomID].playerList:
 			message=json.dumps(ROOMS[roomID].serialize(player.playerID))
 			socketio.emit("start_next_round",message,room=player.playerID)
+		ROOMS[roomID].roundEndTimer=eventlet.spawn_after(100,forceRoundEnd,roomID)
 
+def forceRoundEnd(roomID):
+	with app.test_request_context():
+		ROOMS[roomID].isRoundOnGoing=False;
+		message=json.dumps(ROOMS[roomID].serialize())
+		socketio.emit("round_over",message,room=roomID);
+		eventlet.spawn_after(3,startNextRound,roomID)
 if __name__ =='__main__':
 	socketio.run(app)
