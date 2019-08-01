@@ -18,6 +18,9 @@ socket.on('connect_error', function(){
 socket.on('error', function(data){
     console.log(data);
 });
+socket.on('connect',function(){
+    console.log("connected")
+})
 var localRequestID;
 var isAbleToPhase = false;
 var phaseCount = 3;
