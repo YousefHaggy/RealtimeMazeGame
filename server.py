@@ -10,7 +10,7 @@ from datetime import datetime
 eventlet.monkey_patch()
 app= Flask(__name__)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
-#cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
+cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 socketio=SocketIO(app)
 ROOMS={}
 PLAYERS={}

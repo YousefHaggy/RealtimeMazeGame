@@ -11,7 +11,7 @@ var timeUntilNextRound = 0;
 var enemyPlayers = [];
 var playerCount = 1;
 var canvas;
-var socket = io('wss://' + document.domain + ':' + location.port);
+var socket = io('ws://' + document.domain + ':' + location.port);
 var localRequestID;
 var isAbleToPhase = false;
 var phaseCount = 3;
@@ -465,7 +465,7 @@ function startGame() {
     });
     socket.on("start_next_round", function(data) {
         generateMaze(JSON.parse(data).maze)
-        document.getElementById("rounds").innerHTML="Round "+ JSON.parse(data).roundsLeft +" of "+numberOfRounds;
+        document.getElementById("rounds").innerHTML="Round "+ ((numberOfRounds-JSON.parse(data).roundsLeft)+1) +" of "+numberOfRounds;
         isRoundOngoing = true;
         timeUntilRoundEndForced = 100;
         clearTimeout(roundCountDownTimer);

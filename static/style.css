@@ -24,7 +24,19 @@ display: flex;
 flex-direction: column;
 align-items: center;
 justify-content: center;
-height: 100%;
+height: 100vh;
+}
+h3{
+	text-align: center;
+}
+#instructions{
+	background-color: black;
+	border-style: solid;
+	border-color: white;
+	border-width: 5px;
+	font-family:Arial;
+	font-weight:bold;
+	color: white;
 }
 #game-container{
 	height: 100vh;
