@@ -12,6 +12,12 @@ var enemyPlayers = [];
 var playerCount = 1;
 var canvas;
 var socket = io('ws://' + document.domain);
+socket.on('connect_error', function(){
+    console.log('Connection Failed');
+});
+socket.on('error', function(data){
+    console.log(data);
+});
 var localRequestID;
 var isAbleToPhase = false;
 var phaseCount = 3;
