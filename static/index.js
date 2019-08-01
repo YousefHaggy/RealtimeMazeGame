@@ -23,7 +23,29 @@ var timeUntilRoundEndForced = 100;
 var winningPlayerName = "";
 var hud;
 var numberOfRounds;
-
+var stopwatch=new Object();
+stopwatch.seconds=0;
+stopwatch.minutes=0;
+stopwatch.timer;
+function runStopWatch(){
+    stopwatch.seconds+=1;
+    if (stopwatch.seconds==60)
+    {
+        stopwatch.seconds=0;
+        stopwatch.minutes+=1;
+    }
+    document.getElementById("timer").innerHTML=stopwatch.minutes+":"+(stopwatch.seconds > 9 ? stopwatch.seconds: "0"+stopwatch.seconds);
+    stopwatch.timer=setTimeout(runStopWatch,1000)
+}
+function pauseStopWatch(){
+    clearTimeout(stopwatch.timer);
+}
+function resetStopWatch(){
+  clearTimeout(stopwatch.timer);
+  stopwatch.seconds=0;
+  stopwatch.minutes=0;
+  runStopWatch();
+}
 function setup() {
     hud = new Hud();
     mazeHeight = 700;
@@ -125,7 +147,7 @@ function index(r, c) {
 
 function Hud() {
     this.show = function() {
-        fontSize = canvas.width * .03;
+        fontSize = canvas.width * .06;
         textSize(fontSize)
         textAlign(CENTER, CENTER)
         if (winningPlayerName != "" || player.finishedRace || (!isRoundOngoing && isGameStarted)) {
@@ -395,8 +417,10 @@ function startGame() {
         document.getElementById("lobby-screen").style.display = "none";
         numberOfRounds=JSON.parse(data).roundsLeft;
         document.getElementById("rounds").innerHTML="Round 1 of "+JSON.parse(data).roundsLeft;
+        document.getElementById("leaderboard").style.display="block";
         timeUntilRoundEndForced = 100;
         roundCountDownTimer=setTimeout(roundEndCountDown, 1000);
+        runStopWatch();
 
     });
     socket.on('able_to_phase', function() {
@@ -429,6 +453,7 @@ function startGame() {
     socket.on("finished_race", function(data) {
         player.finishedRace = true;
         player.completedRaceTime = data;
+        pauseStopWatch();
         console.log("finished!")
     })
     socket.on("round_over", function(data) {
@@ -436,6 +461,7 @@ function startGame() {
         isRoundOngoing = false;
         timeUntilNextRound = 3;
         setTimeout(roundCountDown, 1000);
+        pauseStopWatch();
     });
     socket.on("start_next_round", function(data) {
         generateMaze(JSON.parse(data).maze)
@@ -447,9 +473,10 @@ function startGame() {
         var enemyPlayerList = JSON.parse(data).playerList;
         var completePlayerList = JSON.parse(data).completePlayerList;
         initializeEnemies(enemyPlayerList);
-
+        resetStopWatch();
     });
     socket.on('game_won', function(data) {
+        pauseStopWatch();
         winningPlayerName = data;
         setTimeout(function() {
             isGameStarted = false;
