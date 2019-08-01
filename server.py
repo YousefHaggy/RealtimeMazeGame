@@ -22,7 +22,7 @@ class Player():
 		self.playerName=playerName
 		self.roomID='unassigned'
 		self.playerID=playerID
-		self.phasesLeft=15
+		self.phasesLeft=3
 		self.score=0;
 		self.isAbleToPhase=False;
 		self.isRacing=False;
