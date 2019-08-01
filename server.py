@@ -207,5 +207,3 @@ def forceRoundEnd(roomID):
 			socketio.emit("game_won",message,room=roomID)
 			socketio.close_room(roomID)
 			del ROOMS[roomID]
-if __name__ =='__main__':
-	socketio.run(app)

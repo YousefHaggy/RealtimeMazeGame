@@ -11,7 +11,6 @@ var timeUntilNextRound = 0;
 var enemyPlayers = [];
 var playerCount = 1;
 var canvas;
-var enterQueueTimer;
 var socket = io('ws://' + document.domain);
 socket.on('connect_error', function(){
     console.log('Connection Failed');
@@ -390,8 +389,6 @@ function enterQueue(){
     socket.emit('entered_queue', {
         'name': name
     });
-     enterQueueTimer=setTimeout(enterQueue,100);
-
 }
 //Server stuff
 function startGame() {
@@ -402,9 +399,11 @@ function startGame() {
     document.getElementById("playerCount").style.display = "block";
     var name = document.getElementById("nameInput").value;
     console.log(name);
-    enterQueueTimer=setTimeout(enterQueue,100);
+    socket.emit('entered_queue', {
+        'name': name
+    });
     socket.on('join_room', function(msg) {
-        clearTimeout(enterQueueTimer);
+
         console.log(msg);
         localRequestID = msg.playerID;
 
