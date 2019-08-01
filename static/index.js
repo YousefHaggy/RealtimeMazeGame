@@ -17,10 +17,12 @@ var isAbleToPhase = false;
 var phaseCount = 3;
 var mazeWidth;
 var mazeHeight;
+var roundCountDownTimer;
 var frameCount = 0;
 var timeUntilRoundEndForced = 100;
 var winningPlayerName = "";
 var hud;
+var numberOfRounds;
 
 function setup() {
     hud = new Hud();
@@ -28,11 +30,11 @@ function setup() {
     mazeWidth = 800;
     w = 20
     var canvasRatio = mazeHeight / mazeWidth;
-    var windowRatio = window.innerHeight / window.innerWidth;
+    var windowRatio = window.innerHeight / (window.innerWidth-255);
     var newHeight;
     var newWidth;
     if (windowRatio < canvasRatio) {
-        newHeight = window.innerHeight * .95;
+        newHeight = window.innerHeight * .90;
         newWidth = newHeight / canvasRatio;
         w = newHeight / 35;
         console.log("height")
@@ -42,8 +44,7 @@ function setup() {
         w = newHeight / 35;
         console.log("width")
     }
-    //newWidth=Math.floor(newWidth);
-    //newHeight=Math.floor(newHeight);
+
     canvas = createCanvas(newWidth, newHeight);
     canvas.parent('canvas-container');
 
@@ -57,13 +58,13 @@ function windowResized() {
     mazeWidth = 800;
     w = 20
     var canvasRatio = mazeHeight / mazeWidth;
-    var windowRatio = window.innerHeight / window.innerWidth;
+    var windowRatio = window.innerHeight / (window.innerWidth-255);
     var newHeight;
     var newWidth;
     console.log(windowRatio)
     console.log(canvasRatio)
     if (windowRatio < canvasRatio) {
-        newHeight = window.innerHeight * .95;
+        newHeight = window.innerHeight * .90;
         newWidth = newHeight / canvasRatio;
         w = newHeight / 35;
         console.log("height")
@@ -148,11 +149,15 @@ function Hud() {
         if (!isRoundOngoing && isGameStarted) {
             text("Next Rounds starts in " + timeUntilNextRound, canvas.width / 2, (canvas.height / 2) + fontSize + 5);
         }
+        if(winningPlayerName!="")
+        {
+            text(winningPlayerName + " has won the game", canvas.width / 2, canvas.height / 2);
+        }
     }
 }
 
 function updateLeaderBoard(playerList) {
-    var leaderboard = document.getElementById("leaderboard");
+    var leaderboard = document.getElementById("leaderboard-entries");
     leaderboard.innerHTML = "";
     for (var i = 0; i < playerList.length; i++) {
         var node = document.getElementById("leaderboard-entry").cloneNode(true);
@@ -177,7 +182,7 @@ function roundCountDown() {
 function roundEndCountDown() {
     timeUntilRoundEndForced -= 1;
     if (timeUntilRoundEndForced > 0) {
-        setTimeout(roundEndCountDown, 1000);
+       roundCountDownTimer= setTimeout(roundEndCountDown, 1000);
     }
 }
 
@@ -388,8 +393,10 @@ function startGame() {
         generateMaze(JSON.parse(data).maze)
         updateLeaderBoard(completePlayerList)
         document.getElementById("lobby-screen").style.display = "none";
+        numberOfRounds=JSON.parse(data).roundsLeft;
+        document.getElementById("rounds").innerHTML="Round 1 of "+JSON.parse(data).roundsLeft;
         timeUntilRoundEndForced = 100;
-        setTimeout(roundEndCountDown, 1000);
+        roundCountDownTimer=setTimeout(roundEndCountDown, 1000);
 
     });
     socket.on('able_to_phase', function() {
@@ -432,30 +439,21 @@ function startGame() {
     });
     socket.on("start_next_round", function(data) {
         generateMaze(JSON.parse(data).maze)
+        document.getElementById("rounds").innerHTML="Round "+ JSON.parse(data).roundsLeft +" of "+numberOfRounds;
         isRoundOngoing = true;
         timeUntilRoundEndForced = 100;
+        clearTimeout(roundCountDownTimer);
+        roundCountDownTimer=setTimeout(roundEndCountDown, 1000);
         var enemyPlayerList = JSON.parse(data).playerList;
         var completePlayerList = JSON.parse(data).completePlayerList;
         initializeEnemies(enemyPlayerList);
 
     });
     socket.on('game_won', function(data) {
-        parsedData = JSON.parse(data);
-        playerName = parsedData.playerName;
-        //document.getElementsByTagName("canvas")[0].style.display = "none";
-
-        // document.getElementById("win").innerHTML = playerName + " has won the game";
-        //document.getElementById("win").style.display = "block";
-        winningPlayerName = playerName;
-        enemyPlayers.forEach(function(player) {
-            if (parsedData.playerID == player.id) {
-                player.c = parsedData.col;
-                player.r = parsedData.row;
-            }
-        });
+        winningPlayerName = data;
         setTimeout(function() {
             isGameStarted = false;
-        }, 500);
+        }, 100);
         setTimeout(function() {
             document.location.href = "";
         }, 4000);

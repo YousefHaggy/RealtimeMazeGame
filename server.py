@@ -9,8 +9,8 @@ from gamelogic import generateMaze, updatePlayer
 from datetime import datetime
 eventlet.monkey_patch()
 app= Flask(__name__)
-#app.config.update(TEMPLATES_AUTO_RELOAD=True, DEBUG=True)
-cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+#cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 socketio=SocketIO(app)
 ROOMS={}
 PLAYERS={}
@@ -43,7 +43,7 @@ class Room():
 		self.isRoundOnGoing=False;
 		self.seed=seed;
 		self.maze=maze
-		self.roundsLeft=5
+		self.roundsLeft=3
 		self.playersDoneRacing=0;
 		self.roundStartTime=datetime.utcnow();
 		self.roundEndTimer=None;
@@ -59,7 +59,8 @@ class Room():
 		'playerList':[player.serialize() for player in self.playerList if player.playerID != requestSID],
 		'completePlayerList':[player.serialize() for player in self.playerList],
 		'gameStarted':self.gameStarted,
-		'maze': [cell.walls for cell in self.maze]
+		'maze': [cell.walls for cell in self.maze],
+		'roundsLeft': self.roundsLeft
 		}
 @app.route("/")
 def index():
@@ -145,16 +146,17 @@ def playerPositionChanged(data):
 					if ROOMS[roomID].playersDoneRacing==3 or ROOMS[roomID].playersDoneRacing>=len(ROOMS[roomID].playerList):
 						ROOMS[roomID].isRoundOnGoing=False;
 						message=json.dumps(ROOMS[roomID].serialize(request.sid))
-						emit("round_over",message,room=roomID);
+						ROOMS[roomID].roundsLeft-=1
 						ROOMS[roomID].roundEndTimer.cancel()
-						eventlet.spawn_after(3,startNextRound,roomID)
-
-					#
-					#emit("game_won",message,room=roomID)
-					#roomID=PLAYERS[request.sid].roomID
-					#close_room(roomID)
-					#del ROOMS[roomID]
-					#del PLAYERS[request.sid]
+						if ROOMS[roomID].roundsLeft>0:
+							emit("round_over",message,room=roomID);
+							eventlet.spawn_after(3,startNextRound,roomID)
+						else:
+							message=ROOMS[roomID].playerList[0].playerName
+							emit("game_won",message,room=roomID)
+							close_room(roomID)
+							del ROOMS[roomID]
+							#del PLAYERS[request.sid]
 				else:
 					message=json.dumps(player.serialize())
 					emit("players_updated",message,room=roomID,skip_sid=request.sid)
@@ -179,7 +181,6 @@ def startNextRound(roomID):
 	with app.test_request_context():
 		ROOMS[roomID].maze=generateMaze()
 		ROOMS[roomID].playersDoneRacing=0
-		ROOMS[roomID].roundsLeft-=1
 		ROOMS[roomID].roundStartTime=datetime.utcnow()
 		ROOMS[roomID].isRoundOnGoing=True
 		for player in ROOMS[roomID].playerList:
@@ -197,7 +198,14 @@ def forceRoundEnd(roomID):
 	with app.test_request_context():
 		ROOMS[roomID].isRoundOnGoing=False;
 		message=json.dumps(ROOMS[roomID].serialize())
-		socketio.emit("round_over",message,room=roomID);
-		eventlet.spawn_after(3,startNextRound,roomID)
+		ROOMS[roomID].roundsLeft-=1
+		if ROOMS[roomID].roundsLeft>0:
+			socketio.emit("round_over",message,room=roomID)
+			eventlet.spawn_after(3,startNextRound,roomID)
+		else:
+			message=ROOMS[roomID].playerList[0].playerName;
+			socketio.emit("game_won",message,room=roomID)
+			socketio.close_room(roomID)
+			del ROOMS[roomID]
 if __name__ =='__main__':
 	socketio.run(app)

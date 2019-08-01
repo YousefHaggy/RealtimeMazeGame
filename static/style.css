@@ -26,18 +26,22 @@ align-items: center;
 justify-content: center;
 height: 100%;
 }
+#game-container{
+	height: 100vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
 .container{
 display: flex;
 flex-direction: row;
-align-items: center;
+align-items: top;
 justify-content: center;
-height:100vh
-;}
+}
 #templates{
 	display: none;
 }
 #leaderboard{
-	width: 225px;
 	background-color: black;
 	border-style: solid;
 	border-color: white;
@@ -45,6 +49,7 @@ height:100vh
 	font-family:Arial;
 	font-weight:bold;
 	color: white;
+	flex-basis: 20%;
 	padding: 5px;
 }
 .leaderboard-entry{
@@ -52,6 +57,17 @@ height:100vh
 	flex-direction: row;
 	justify-content: space-between;
 	width: 100%;
+	font-size: 18px;
+}
+#rounds
+{
+	font-size: 20px;
+	text-align: center;
+}
+#timer
+{
+	font-size: 25px;
+	text-align: center;
 }
 .flex-row{
 	margin-top: 5px;
