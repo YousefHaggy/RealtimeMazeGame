@@ -174,7 +174,7 @@ def startGame(roomID):
 			player.isRacing=True;
 			message=json.dumps(ROOMS[roomID].serialize(player.playerID))
 			socketio.emit("start_game",message,room=player.playerID)
-		ROOMS[roomID].roundEndTimer=eventlet.spawn_after(100,forceRoundEnd,roomID)
+		ROOMS[roomID].roundEndTimer=eventlet.spawn_after(150,forceRoundEnd,roomID)
 def startNextRound(roomID):
 	with app.test_request_context():
 		ROOMS[roomID].maze=generateMaze()
@@ -190,7 +190,7 @@ def startNextRound(roomID):
 		for player in ROOMS[roomID].playerList:
 			message=json.dumps(ROOMS[roomID].serialize(player.playerID))
 			socketio.emit("start_next_round",message,room=player.playerID)
-		ROOMS[roomID].roundEndTimer=eventlet.spawn_after(100,forceRoundEnd,roomID)
+		ROOMS[roomID].roundEndTimer=eventlet.spawn_after(150,forceRoundEnd,roomID)
 
 def forceRoundEnd(roomID):
 	with app.test_request_context():

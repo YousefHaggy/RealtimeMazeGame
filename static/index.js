@@ -44,7 +44,7 @@ var mazeWidth;
 var mazeHeight;
 var roundCountDownTimer;
 var frameCount = 0;
-var timeUntilRoundEndForced = 100;
+var timeUntilRoundEndForced = 150;
 var winningPlayerName = "";
 var hud;
 var numberOfRounds;
@@ -359,7 +359,7 @@ function updatePlayerPosition(direction) {
 //Player controls
 kd.run(function() {
     frameCount += 1
-    if (frameCount >= 5) {
+    if (frameCount >= 8) {
         frameCount = 0;
         kd.tick();
         kd.LEFT.down(function() {
@@ -456,7 +456,7 @@ function startGame() {
         numberOfRounds=JSON.parse(data).roundsLeft;
         document.getElementById("rounds").innerHTML="Round 1 of "+JSON.parse(data).roundsLeft;
         document.getElementById("leaderboard").style.display="block";
-        timeUntilRoundEndForced = 100;
+        timeUntilRoundEndForced = 150;
         roundCountDownTimer=setTimeout(roundEndCountDown, 1000);
         runStopWatch();
 
@@ -505,7 +505,7 @@ function startGame() {
         generateMaze(JSON.parse(data).maze)
         document.getElementById("rounds").innerHTML="Round "+ ((numberOfRounds-JSON.parse(data).roundsLeft)+1) +" of "+numberOfRounds;
         isRoundOngoing = true;
-        timeUntilRoundEndForced = 100;
+        timeUntilRoundEndForced = 150;
         clearTimeout(roundCountDownTimer);
         roundCountDownTimer=setTimeout(roundEndCountDown, 1000);
         var enemyPlayerList = JSON.parse(data).playerList;
