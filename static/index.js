@@ -84,12 +84,10 @@ function setup() {
         newHeight = window.innerHeight * .90;
         newWidth = newHeight / canvasRatio;
         w = newHeight / 35;
-        console.log("height")
     } else {
         newWidth = window.innerWidth * .75;
         newHeight = newWidth * canvasRatio;
         w = newHeight / 35;
-        console.log("width")
     }
 
     canvas = createCanvas(newWidth, newHeight);
@@ -108,13 +106,10 @@ function windowResized() {
     var windowRatio = window.innerHeight / (window.innerWidth-255);
     var newHeight;
     var newWidth;
-    console.log(windowRatio)
-    console.log(canvasRatio)
     if (windowRatio < canvasRatio) {
         newHeight = window.innerHeight * .90;
         newWidth = newHeight / canvasRatio;
         w = newHeight / 35;
-        console.log("height")
     } else {
         newWidth = window.innerWidth * .75
         newHeight = newWidth * canvasRatio;
@@ -410,20 +405,17 @@ function startGame() {
     document.getElementById("queue").style.display = "block";
     document.getElementById("playerCount").style.display = "block";
     var name = document.getElementById("nameInput").value;
-    console.log(name);
     socket.emit('entered_queue', {
         'name': name
     });
     socket.on('join_room', function(msg) {
         isConnected=true;
-        console.log(msg);
         localRequestID = msg.playerID;
 
 
     });
     socket.on('room_found', function(data) {
         playerCount += 1;
-        console.log("room FOUND");
         document.getElementById("playerCount").innerHTML = data + "/10";
         secondsRemaining = 3
         document.getElementById("queue").innerHTML = "Starting round 1 in " + secondsRemaining;
@@ -438,18 +430,15 @@ function startGame() {
     });
 
     socket.on('match_starting', function() {
-        console.log("ROOMFOUND")
             // socket.emit('get_room_details');
     })
     socket.on('start_game', function(data) {
-        console.log(data);
         seed = JSON.parse(data).seed;
         var enemyPlayerList = JSON.parse(data).playerList;
         var completePlayerList = JSON.parse(data).completePlayerList;
         isGameStarted = true;
         isRoundOngoing = true;
         initializeEnemies(enemyPlayerList);
-        console.log(enemyPlayerList);
         generateMaze(JSON.parse(data).maze)
         updateLeaderBoard(completePlayerList)
         document.getElementById("lobby-screen").style.display = "none";
@@ -471,7 +460,6 @@ function startGame() {
         parsedData = JSON.parse(data);
         player.c = parsedData.col
         player.r = parsedData.row
-        console.log(parsedData.isAbleToPhase)
         player.isAbleToPhase = parsedData.isAbleToPhase
     })
     socket.on('players_updated', function(data) {
@@ -492,10 +480,8 @@ function startGame() {
         player.finishedRace = true;
         player.completedRaceTime = data;
         pauseStopWatch();
-        console.log("finished!")
     })
     socket.on("round_over", function(data) {
-        console.log("teststest");
         isRoundOngoing = false;
         timeUntilNextRound = 3;
         setTimeout(roundCountDown, 1000);
