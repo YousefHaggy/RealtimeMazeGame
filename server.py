@@ -1,6 +1,5 @@
 from flask import Flask, request, jsonify, render_template
 from flask_socketio import SocketIO, join_room, leave_room, emit, rooms, send, close_room
-from flask_cors import CORS
 import random
 from threading import Timer
 import eventlet
@@ -10,7 +9,6 @@ from datetime import datetime
 eventlet.monkey_patch()
 app= Flask(__name__)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
-#cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 socketio=SocketIO(app)
 ROOMS={}
 PLAYERS={}
@@ -207,3 +205,6 @@ def forceRoundEnd(roomID):
 			socketio.emit("game_won",message,room=roomID)
 			socketio.close_room(roomID)
 			del ROOMS[roomID]
+
+if __name__=="__main__":
+	socketio.run(app)

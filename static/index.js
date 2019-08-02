@@ -11,7 +11,16 @@ var timeUntilNextRound = 0;
 var enemyPlayers = [];
 var playerCount = 1;
 var canvas;
-var socket = io('ws://' + document.domain);
+var isConnected=false;
+var socket;
+if (document.domain=="localhost")
+{
+    socket= io('ws://' + document.domain+":5000");
+}
+else
+{
+    socket = io('ws://' + document.domain);
+}
 socket.on('connect_error', function(){
     console.log('Connection Failed');
 });
@@ -20,6 +29,10 @@ socket.on('error', function(data){
 });
 socket.on('connect',function(){
     console.log("connected")
+});
+
+socket.on('disconnect',function(){
+    console.log("disconnected")
 })
 var localRequestID;
 var isAbleToPhase = false;
@@ -399,7 +412,7 @@ function startGame() {
         'name': name
     });
     socket.on('join_room', function(msg) {
-
+        isConnected=true;
         console.log(msg);
         localRequestID = msg.playerID;
 
