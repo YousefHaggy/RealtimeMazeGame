@@ -1,14 +1,13 @@
 import random
 cols=40
 rows=35
-grid=[]
 class Cell():
 	def __init__(self,row,col):
 		self.col=col
 		self.row=row
 		self.walls=[True,True,True,True]
 		self.visited=False
-	def getRandomNeighbor(self):
+	def getRandomNeighbor(self,grid):
 		neighbors=[]
 		top,right,bottom,left=None,None,None,None
 		if index(self.row,self.col-1):
@@ -51,8 +50,7 @@ def removeWall(current,neighbor):
 		neighbor.walls[3]=False
 
 def generateMaze():
-	global grid
-	grid.clear()
+	grid=[]
 	for r in range(0,rows):
 		for c in range(0,cols):
 			grid.append(Cell(r,c)) 
@@ -61,7 +59,7 @@ def generateMaze():
 	stack.append(current)
 	while len(stack)>0:
 		current.visited=True
-		neighbor=current.getRandomNeighbor()
+		neighbor=current.getRandomNeighbor(grid)
 		if neighbor:
 			neighbor.visited=True
 			removeWall(current,neighbor)

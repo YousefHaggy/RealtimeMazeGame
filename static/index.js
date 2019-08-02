@@ -15,13 +15,13 @@ var isConnected=false;
 var socket;
 if (document.domain=="localhost")
 {
-    socket= io('ws://' + document.domain+":5000");
+    socket= io('ws://' + document.domain+":5000",{ transports: ['websocket'] });
 }
 else
 {
-    socket = io('ws://' + document.domain);
+    socket = io('ws://' + document.domain,{ transports: ['websocket'] });
 }
-socket.on('connect_error', function(){
+socket.on('connect_failed', function(){
     console.log('Connection Failed');
 });
 socket.on('error', function(data){
@@ -33,6 +33,9 @@ socket.on('connect',function(){
 
 socket.on('disconnect',function(){
     console.log("disconnected")
+})
+socket.on('reconnecting',function(){
+    console.log("recpmmectomg")
 })
 var localRequestID;
 var isAbleToPhase = false;
