@@ -103,17 +103,17 @@ def handleConnect(data):
 	emit('join_room',{'room':seed,'playerID':request.sid})
  
 	
-@socketio.on('discgonnect')
+@socketio.on('disconnect')
 def handleDisconnect():
 	print(ROOMS)
 	if request.sid in PLAYERS:
 		roomID=PLAYERS[request.sid].roomID
-		leave_room(roomID)
-		ROOMS[roomID].remove_player(request.sid)
-		if len(ROOMS[roomID].playerList)==0:
+		if len(ROOMS[roomID].playerList)==1:
+			leave_room(roomID)
+			ROOMS[roomID].remove_player(request.sid)
 			del ROOMS[roomID]
 			print(ROOMS)
-		del PLAYERS[request.sid]
+			del PLAYERS[request.sid]
 @socketio.on('get_room_details')
 def getRoomDetails():
 	roomID=PLAYERS[request.sid].roomID
