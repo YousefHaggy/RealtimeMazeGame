@@ -38,18 +38,12 @@ class Player():
 class Bot(Player):
 	def __init__(self,col,row,playerID,playerName,roomID):
 		super().__init__(col,row,playerID,playerName,roomID)
-		self.path=generateMazeSolution(ROOMS[self.roomID].maze);
+		self.path=ROOMS[self.roomID].solutions.pop()
 	def moveBot(self):
 		if ROOMS[self.roomID].isRoundOnGoing and self.isRacing:
 			self.nextStep=self.path[0]
-			if self.nextStep.row>self.row:
-				self.row+=1
-			elif self.nextStep.row<self.row:
-				self.row-=1
-			elif self.nextStep.col>self.col:
-				self.col+=1
-			elif self.nextStep.col<self.col:
-				self.col-=1
+			self.row=self.nextStep.row
+			self.col=self.nextStep.col
 			self.path.pop(0)
 			message=json.dumps(self.serialize())
 			socketio.emit("players_updated",message,room=self.roomID)
@@ -63,6 +57,9 @@ class Room():
 		self.isRoundOnGoing=False;
 		self.seed=seed;
 		self.maze=maze
+		self.solutions=[generateMazeSolution(maze) for i in range(1,10)]
+		print(self.solutions)
+		self.solutions.sort(key=len,reverse=True)
 		self.roundsLeft=3
 		self.playersDoneRacing=0;
 		self.roundStartTime=datetime.utcnow();
@@ -77,9 +74,8 @@ class Room():
 	def addBots(self):
 		numberOfBots=10-len(self.playerList)
 		if numberOfBots>0:
-			for i in range(0,1):
+			for i in range(0,random.randint(1,3)):
 				self.add_player(Bot(0,0,random.randint(1,10000000),("bot #"+str(i)),self.seed))
-			eventlet.spawn_after(3,startGame,self.seed)
 	def serialize(self,requestSID="none"):
 		return{
 		'playerList':[player.serialize() for player in self.playerList if player.playerID != requestSID],
@@ -108,8 +104,6 @@ def handleConnect(data):
 			join_room(seed)
 			emit("room_found",len(room.playerList),room=seed)
 			print("In room" +str(PLAYERS[request.sid].roomID))
-			if len(room.playerList)==10:
-				eventlet.spawn_after(3,startGame,seed)
 	if not matchFound:
 		seed=random.randint(1,100000)
 		while seed in seedList:
@@ -119,8 +113,9 @@ def handleConnect(data):
 		PLAYERS[request.sid].roomID=seed;
 		room.add_player(PLAYERS[request.sid])
 		ROOMS[seed]=room;
+		room.addBots()
 		join_room(seed)
-		eventlet.spawn_after(3,room.addBots)
+		eventlet.spawn_after(10,startGame,seed)
 	print("new connect event " +str(PLAYERS[request.sid].roomID))
 	emit('join_room',{'room':seed,'playerID':request.sid})
 @socketio.on('disconnect')

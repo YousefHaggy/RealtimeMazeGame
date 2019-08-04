@@ -98,8 +98,7 @@ def generateMazeSolution(maze):
 	steps=[]
 	stack=[]
 	current=maze[0]
-	stack.append(current)
-	steps.append(current)
+	#stack.append(current)
 	while not reachedEndOfMaze:
 		current.visited=True
 		neighbor=current.getRandomNeighborForSolve(maze)
@@ -109,8 +108,8 @@ def generateMazeSolution(maze):
 				reachedEndOfMaze=True
 				return steps
 			neighbor.visited=True
-			steps.append(neighbor)
-			stack.append(neighbor)
+			steps.append(current)
+			stack.append(current)
 			current=neighbor
 		else:
 			current=stack.pop()
