@@ -3,8 +3,9 @@ from flask_socketio import SocketIO, join_room, leave_room, emit, rooms, send, c
 import random
 from threading import Timer
 import eventlet
+import time
 import json;
-from gamelogic import generateMaze, updatePlayer
+from gamelogic import generateMaze, updatePlayer, generateMazeSolution
 from datetime import datetime
 eventlet.monkey_patch()
 app= Flask(__name__)
@@ -14,11 +15,11 @@ ROOMS={}
 PLAYERS={}
 seedList=[]
 class Player():
-	def __init__(self,col,row,playerID,playerName="unnamed"):
+	def __init__(self,col,row,playerID,playerName="unnamed",roomID="unassigned"):
 		self.col=col
 		self.row=row
 		self.playerName=playerName
-		self.roomID='unassigned'
+		self.roomID=roomID
 		self.playerID=playerID
 		self.phasesLeft=3
 		self.score=0;
@@ -34,6 +35,27 @@ class Player():
 		'isAbleToPhase':self.isAbleToPhase,
 		'score': self.score
 		}
+class Bot(Player):
+	def __init__(self,col,row,playerID,playerName,roomID):
+		super().__init__(col,row,playerID,playerName,roomID)
+		self.path=generateMazeSolution(ROOMS[self.roomID].maze);
+	def moveBot(self):
+		if ROOMS[self.roomID].isRoundOnGoing and self.isRacing:
+			self.nextStep=self.path[0]
+			if self.nextStep.row>self.row:
+				self.row+=1
+			elif self.nextStep.row<self.row:
+				self.row-=1
+			elif self.nextStep.col>self.col:
+				self.col+=1
+			elif self.nextStep.col<self.col:
+				self.col-=1
+			self.path.pop(0)
+			message=json.dumps(self.serialize())
+			socketio.emit("players_updated",message,room=self.roomID)
+			eventlet.spawn_after(.2,self.moveBot)
+			#t.start();
+
 class Room():
 	def __init__(self,seed,maze):
 		self.playerList=[];
@@ -52,6 +74,12 @@ class Room():
 		for player in self.playerList:
 			if player.playerID == playerID:
 				self.playerList.remove(player)
+	def addBots(self):
+		numberOfBots=10-len(self.playerList)
+		if numberOfBots>0:
+			for i in range(0,1):
+				self.add_player(Bot(0,0,random.randint(1,10000000),("bot #"+str(i)),self.seed))
+			eventlet.spawn_after(3,startGame,self.seed)
 	def serialize(self,requestSID="none"):
 		return{
 		'playerList':[player.serialize() for player in self.playerList if player.playerID != requestSID],
@@ -73,22 +101,15 @@ def handleConnect(data):
 	for seed,room in ROOMS.items():
 		print(str(len(room.playerList)))
 		print(str(room.gameStarted))
-		if len(room.playerList)<2 and room.gameStarted==False:
+		if len(room.playerList)<10 and room.gameStarted==False:
 			matchFound=True
 			PLAYERS[request.sid].roomID=seed;
 			room.add_player(PLAYERS[request.sid])
 			join_room(seed)
 			emit("room_found",len(room.playerList),room=seed)
 			print("In room" +str(PLAYERS[request.sid].roomID))
-			eventlet.spawn_after(3,startGame,seed)
-		elif room.gameStarted==False and len(room.playerList)<10:
-			matchFound=True
-			PLAYERS[request.sid].roomID=seed;
-			room.add_player(PLAYERS[request.sid])
-			join_room(seed)
-			print("MORE THAN 2")
-			print("In room " +str(PLAYERS[request.sid].roomID))
-			emit("room_found",len(room.playerList),room=seed)
+			if len(room.playerList)==10:
+				eventlet.spawn_after(3,startGame,seed)
 	if not matchFound:
 		seed=random.randint(1,100000)
 		while seed in seedList:
@@ -99,10 +120,9 @@ def handleConnect(data):
 		room.add_player(PLAYERS[request.sid])
 		ROOMS[seed]=room;
 		join_room(seed)
+		eventlet.spawn_after(3,room.addBots)
 	print("new connect event " +str(PLAYERS[request.sid].roomID))
 	emit('join_room',{'room':seed,'playerID':request.sid})
- 
-	
 @socketio.on('disconnect')
 def handleDisconnect():
 	print(ROOMS)
@@ -172,8 +192,12 @@ def startGame(roomID):
 		socketio.emit("match_starting",room=roomID);
 		for player in ROOMS[roomID].playerList:
 			player.isRacing=True;
-			message=json.dumps(ROOMS[roomID].serialize(player.playerID))
-			socketio.emit("start_game",message,room=player.playerID)
+			if type(player).__name__=="Bot":
+				player.moveBot()
+				print("bot")
+			else:
+				message=json.dumps(ROOMS[roomID].serialize(player.playerID))
+				socketio.emit("start_game",message,room=player.playerID)
 		ROOMS[roomID].roundEndTimer=eventlet.spawn_after(150,forceRoundEnd,roomID)
 def startNextRound(roomID):
 	with app.test_request_context():
