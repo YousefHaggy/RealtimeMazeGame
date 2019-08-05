@@ -91,7 +91,7 @@ def generateMaze():
 		else:
 			current=stack.pop()
 	return grid
-def generateMazeSolution(maze):
+def generateMazeSolution(maze,difficulty="easy"):
 	for cell in maze:
 		cell.visited=False;
 	reachedEndOfMaze=False;
@@ -113,7 +113,10 @@ def generateMazeSolution(maze):
 			current=neighbor
 		else:
 			current=stack.pop()
-			steps.append(current)
+			if difficulty=="easy":
+				steps.append(current)
+			else:
+				steps.pop()
 	return steps
 def updatePlayer(player,direction,maze):
 	currentRow=player.row

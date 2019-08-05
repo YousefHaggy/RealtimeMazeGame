@@ -14,7 +14,6 @@ socketio=SocketIO(app)
 ROOMS={}
 PLAYERS={}
 seedList=[]
-botNames=["Monkey","Pants","Unicorn","Noob","TTV","Bert","Banana","Master","Overlord","Booty","Blaster","Icy"]
 class Player():
 	def __init__(self,col,row,playerID,playerName="unnamed",roomID="unassigned"):
 		self.col=col
@@ -26,6 +25,7 @@ class Player():
 		self.score=0;
 		self.isAbleToPhase=False;
 		self.isRacing=False;
+		self.color={'r':random.randint(0,255),'g':random.randint(0,255),'b':random.randint(0,255)}
 	def serialize(self):
 		return{
 		'col': self.col,
@@ -34,6 +34,7 @@ class Player():
 		'playerID': self.playerID,
 		'playerName':self.playerName,
 		'isAbleToPhase':self.isAbleToPhase,
+		'color':self.color,
 		'score': self.score
 		}
 class Bot(Player):
@@ -51,7 +52,11 @@ class Bot(Player):
 			socketio.emit("players_updated",message,room=self.roomID)
 			#t.start();
 	def generateName(self):
-		return random.choice(botNames)+random.choice(botNames)+str(random.randint(10,999))
+		firstName= random.choice(ROOMS[self.roomID].botNames)
+		ROOMS[self.roomID].botNames.remove(firstName)
+		secondName =random.choice(ROOMS[self.roomID].botNames)
+		ROOMS[self.roomID].botNames.remove(secondName)
+		return firstName+random.choice(["_"," ",""])+secondName+str(random.randint(10,999))
 class Room():
 	def __init__(self,seed,maze):
 		self.playerList=[];
@@ -59,13 +64,14 @@ class Room():
 		self.isRoundOnGoing=False;
 		self.seed=seed;
 		self.maze=maze
-		self.solutions=[generateMazeSolution(maze) for i in range(1,20)]
-		self.solutions.sort(key=len,reverse=True)
+		self.solutions=[generateMazeSolution(maze) for i in range(1,20)][16:20]
+		random.shuffle(self.solutions)
+		self.solutions.append(generateMazeSolution(maze,"hard"))
 		self.roundsLeft=3
 		self.playersDoneRacing=0;
 		self.roundStartTime=datetime.utcnow();
 		self.roundEndTimer=None;
-
+		self.botNames=["Monkey","Pants","Unicorn","Noob","TTV","Bert","Banana","Master","Overlord","Booty","Blaster","Icy"]
 	def add_player(self,player):
 		self.playerList.append(player)
 	def remove_player(self,playerID):
@@ -75,7 +81,7 @@ class Room():
 	def addBots(self):
 		numberOfBots=10-len(self.playerList)
 		if numberOfBots>0:
-			for i in range(0,random.randint(2,4)):
+			for i in range(0,random.randint(3,4)):
 				self.add_player(Bot(0,0,random.randint(1,10000000),("bot #"+str(i)),self.seed))
 	def moveAllBots(self):
 		if self.isRoundOnGoing:
@@ -141,7 +147,7 @@ def handleConnect(data):
 			PLAYERS[request.sid].roomID=seed;
 			room.add_player(PLAYERS[request.sid])
 			join_room(seed)
-			emit("room_found",len(room.playerList),room=seed)
+			emit("update_player_count",len(room.playerList),room=seed)
 			print("In room" +str(PLAYERS[request.sid].roomID))
 	if not matchFound:
 		seed=random.randint(1,100000)
@@ -215,8 +221,9 @@ def startGame(roomID):
 def startNextRound(roomID):
 	with app.test_request_context():
 		ROOMS[roomID].maze=generateMaze()
-		ROOMS[roomID].solutions=[generateMazeSolution(ROOMS[roomID].maze) for i in range(1,20)]
-		ROOMS[roomID].solutions.sort(key=len,reverse=True)
+		ROOMS[roomID].solutions=[generateMazeSolution(ROOMS[roomID].maze) for i in range(1,20)][16:20]
+		random.shuffle(ROOMS[roomID].solutions)
+		ROOMS[roomID].solutions.append(generateMazeSolution(ROOMS[roomID].maze,"hard"))
 		ROOMS[roomID].playersDoneRacing=0
 		ROOMS[roomID].roundStartTime=datetime.utcnow()
 		ROOMS[roomID].isRoundOnGoing=True

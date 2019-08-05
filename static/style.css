@@ -72,6 +72,15 @@ justify-content: center;
 	width: 100%;
 	font-size: 18px;
 }
+.block
+{
+	width:15px;
+	height: 15px;
+	border-color: white;
+	border-style: solid;
+	border-width: 3px;
+	margin-right: 5px;
+}
 #rounds
 {
 	font-size: 20px;
@@ -91,6 +100,10 @@ justify-content: center;
 }
 .player-time{
 	width: 50%;
+}
+.player-name
+{
+margin-right: auto;
 }
 .player-score{
 align-self: flex-end;

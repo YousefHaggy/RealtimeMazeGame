@@ -11,30 +11,31 @@ var timeUntilNextRound = 0;
 var enemyPlayers = [];
 var playerCount = 1;
 var canvas;
-var isConnected=false;
+var isConnected = false;
 var socket;
-if (document.domain=="localhost")
-{
-    socket= io('ws://' + document.domain+":5000",{ transports: ['websocket'] });
+if (document.domain == "localhost") {
+    socket = io('ws://' + document.domain + ":5000", {
+        transports: ['websocket']
+    });
+} else {
+    socket = io('ws://' + document.domain, {
+        transports: ['websocket']
+    });
 }
-else
-{
-    socket = io('ws://' + document.domain,{ transports: ['websocket'] });
-}
-socket.on('connect_failed', function(){
+socket.on('connect_failed', function() {
     console.log('Connection Failed');
 });
-socket.on('error', function(data){
+socket.on('error', function(data) {
     console.log(data);
 });
-socket.on('connect',function(){
+socket.on('connect', function() {
     console.log("connected")
 });
 
-socket.on('disconnect',function(){
+socket.on('disconnect', function() {
     console.log("disconnected")
 })
-socket.on('reconnecting',function(){
+socket.on('reconnecting', function() {
     console.log("recpmmectomg")
 })
 var localRequestID;
@@ -48,36 +49,39 @@ var timeUntilRoundEndForced = 150;
 var winningPlayerName = "";
 var hud;
 var numberOfRounds;
-var stopwatch=new Object();
-stopwatch.seconds=0;
-stopwatch.minutes=0;
+var stopwatch = new Object();
+stopwatch.seconds = 0;
+stopwatch.minutes = 0;
 stopwatch.timer;
-function runStopWatch(){
-    stopwatch.seconds+=1;
-    if (stopwatch.seconds==60)
-    {
-        stopwatch.seconds=0;
-        stopwatch.minutes+=1;
+
+function runStopWatch() {
+    stopwatch.seconds += 1;
+    if (stopwatch.seconds == 60) {
+        stopwatch.seconds = 0;
+        stopwatch.minutes += 1;
     }
-    document.getElementById("timer").innerHTML=stopwatch.minutes+":"+(stopwatch.seconds > 9 ? stopwatch.seconds: "0"+stopwatch.seconds);
-    stopwatch.timer=setTimeout(runStopWatch,1000)
+    document.getElementById("timer").innerHTML = stopwatch.minutes + ":" + (stopwatch.seconds > 9 ? stopwatch.seconds : "0" + stopwatch.seconds);
+    stopwatch.timer = setTimeout(runStopWatch, 1000)
 }
-function pauseStopWatch(){
+
+function pauseStopWatch() {
     clearTimeout(stopwatch.timer);
 }
-function resetStopWatch(){
-  clearTimeout(stopwatch.timer);
-  stopwatch.seconds=0;
-  stopwatch.minutes=0;
-  runStopWatch();
+
+function resetStopWatch() {
+    clearTimeout(stopwatch.timer);
+    stopwatch.seconds = 0;
+    stopwatch.minutes = 0;
+    runStopWatch();
 }
+
 function setup() {
     hud = new Hud();
     mazeHeight = 700;
     mazeWidth = 800;
     w = 20
     var canvasRatio = mazeHeight / mazeWidth;
-    var windowRatio = window.innerHeight / (window.innerWidth-255);
+    var windowRatio = window.innerHeight / (window.innerWidth - 255);
     var newHeight;
     var newWidth;
     if (windowRatio < canvasRatio) {
@@ -103,7 +107,7 @@ function windowResized() {
     mazeWidth = 800;
     w = 20
     var canvasRatio = mazeHeight / mazeWidth;
-    var windowRatio = window.innerHeight / (window.innerWidth-255);
+    var windowRatio = window.innerHeight / (window.innerWidth - 255);
     var newHeight;
     var newWidth;
     if (windowRatio < canvasRatio) {
@@ -153,7 +157,7 @@ function generateMaze(maze) {
         }
     }
 
-    player = new Player('#0000FF', localRequestID);
+    player = new Player({'r':0,'g':0,'b':255}, localRequestID);
 
 }
 
@@ -167,7 +171,7 @@ function index(r, c) {
 
 function Hud() {
     this.show = function() {
-        fontSize = canvas.width * .06;
+        fontSize = canvas.width * .04;
         textSize(fontSize)
         textAlign(CENTER, CENTER)
         if (winningPlayerName != "" || player.finishedRace || (!isRoundOngoing && isGameStarted)) {
@@ -179,22 +183,17 @@ function Hud() {
         if (winningPlayerName != "") {
 
             text(winningPlayerName + " has won the game", canvas.width / 2, canvas.height / 2);
-        }
-        if (player.finishedRace) {
+        } else if (player.finishedRace) {
 
             text("You finished the round in " + player.completedRaceTime + " seconds...", canvas.width / 2, canvas.height / 2);
             if (isRoundOngoing) {
                 text("Wating for other players... " + timeUntilRoundEndForced + " seconds", canvas.width / 2, (canvas.height / 2) + fontSize + 5);
             }
 
-        }
-        if (!isRoundOngoing && isGameStarted) {
+        } else if (!isRoundOngoing && isGameStarted) {
             text("Next Rounds starts in " + timeUntilNextRound, canvas.width / 2, (canvas.height / 2) + fontSize + 5);
         }
-        if(winningPlayerName!="")
-        {
-            text(winningPlayerName + " has won the game", canvas.width / 2, canvas.height / 2);
-        }
+
     }
 }
 
@@ -204,10 +203,15 @@ function updateLeaderBoard(playerList) {
     for (var i = 0; i < playerList.length; i++) {
         var node = document.getElementById("leaderboard-entry").cloneNode(true);
         node.id = "entry" + playerList[i].playerName;
-        node.getElementsByTagName('div')[0].innerHTML = "#" + (i + 1) + " " + playerList[i].playerName;
-        node.getElementsByTagName('div')[1].innerHTML = "Score: " + playerList[i].score;
+        node.getElementsByTagName('div')[1].innerHTML = "#" + (i + 1) + " " + playerList[i].playerName;
+        node.getElementsByTagName('div')[2].innerHTML = "Score: " + playerList[i].score;
         if (playerList[i].playerID == player.id) {
             node.style.color = "#f7dc6f";
+        node.getElementsByTagName('div')[0].style.backgroundColor="rgb(0,0,255)";
+        }
+        else
+        {
+         node.getElementsByTagName('div')[0].style.backgroundColor="rgb("+playerList[i].color.r+","+playerList[i].color.g+","+playerList[i].color.b+")";
         }
         leaderboard.appendChild(node);
     }
@@ -224,7 +228,7 @@ function roundCountDown() {
 function roundEndCountDown() {
     timeUntilRoundEndForced -= 1;
     if (timeUntilRoundEndForced > 0) {
-       roundCountDownTimer= setTimeout(roundEndCountDown, 1000);
+        roundCountDownTimer = setTimeout(roundEndCountDown, 1000);
     }
 }
 
@@ -256,24 +260,26 @@ function Cell(r, c) {
         }
         if (this.r == rows - 1 && this.c == cols - 1) {
             fill("#FFD700");
-             star(x + w / 2, y + w / 2, w/4,w/2,5)
+            star(x + w / 2, y + w / 2, w / 4, w / 2, 5)
         }
     }
 }
+
 function star(x, y, radius1, radius2, npoints) {
-  let angle = TWO_PI / npoints;
-  let halfAngle = angle / 2.0;
-  beginShape();
-  for (let a = 0; a < TWO_PI; a += angle) {
-    let sx = x + cos(a) * radius2;
-    let sy = y + sin(a) * radius2;
-    vertex(sx, sy);
-    sx = x + cos(a + halfAngle) * radius1;
-    sy = y + sin(a + halfAngle) * radius1;
-    vertex(sx, sy);
-  }
-  endShape(CLOSE);
+    let angle = TWO_PI / npoints;
+    let halfAngle = angle / 2.0;
+    beginShape();
+    for (let a = 0; a < TWO_PI; a += angle) {
+        let sx = x + cos(a) * radius2;
+        let sy = y + sin(a) * radius2;
+        vertex(sx, sy);
+        sx = x + cos(a + halfAngle) * radius1;
+        sy = y + sin(a + halfAngle) * radius1;
+        vertex(sx, sy);
+    }
+    endShape(CLOSE);
 }
+
 function Player(color, id) {
     this.r = 0;
     this.c = 0;
@@ -285,19 +291,10 @@ function Player(color, id) {
     this.score = 0;
     this.completedRaceTime = 0;
     modifier = -1;
-    if (!color) {
-        this.red = random(255);
-        this.green = random(255);
-        this.blue = random(255);
-    }
     this.show = function() {
         var x = (this.c * w) + (.25 * w);
         var y = (this.r * w) + (.25 * w);
         noStroke();
-        if (!color) {
-            stroke('#FFFFFF')
-            fill(this.red, this.green, this.blue);
-        } else {
             if (this.isAbleToPhase) {
                 if (this.alpha >= 255) {
                     modifier = 1;
@@ -306,15 +303,15 @@ function Player(color, id) {
                     modifier = -1;
                 }
                 this.alpha -= (10 * modifier);
-                fill(0, 0, 255, this.alpha);
+                fill(this.color.r, this.color.g, this.color.b, this.alpha);
                 stroke(255, 255, 255, this.alpha)
 
             } else {
-                fill(0, 0, 255, 255);
+                fill(this.color.r, this.color.g, this.color.b, 255);
                 stroke('#FFFFFF')
 
             }
-        }
+        
         rect(x, y, w - (.5 * w), w - (.5 * w));
         if (player.c == cols - 1 && player.r == rows - 1) {}
     }
@@ -323,7 +320,7 @@ function Player(color, id) {
 function initializeEnemies(enemyPlayerList) {
     enemyPlayers = [];
     enemyPlayerList.forEach(function(x) {
-        enemyPlayers.push(new Player(false, x.playerID));
+        enemyPlayers.push(new Player(x.color, x.playerID));
     })
 }
 
@@ -409,11 +406,16 @@ function startGame() {
         'name': name
     });
     socket.on('join_room', function(msg) {
-        isConnected=true;
+        isConnected = true;
         localRequestID = msg.playerID;
-        playerCount=msg.numberOfPlayers
+        playerCount = msg.numberOfPlayers
         document.getElementById("playerCount").innerHTML = playerCount + "/10";
 
+
+    });
+    socket.on('update_player_count', function(msg) {
+        playerCount = msg
+        document.getElementById("playerCount").innerHTML = msg + "/10";
 
     });
     socket.on('room_found', function(data) {
@@ -431,7 +433,7 @@ function startGame() {
     });
 
     socket.on('match_starting', function() {
-            // socket.emit('get_room_details');
+        // socket.emit('get_room_details');
     })
     socket.on('start_game', function(data) {
         seed = JSON.parse(data).seed;
@@ -443,11 +445,11 @@ function startGame() {
         generateMaze(JSON.parse(data).maze)
         updateLeaderBoard(completePlayerList)
         document.getElementById("lobby-screen").style.display = "none";
-        numberOfRounds=JSON.parse(data).roundsLeft;
-        document.getElementById("rounds").innerHTML="Round 1 of "+JSON.parse(data).roundsLeft;
-        document.getElementById("leaderboard").style.display="block";
+        numberOfRounds = JSON.parse(data).roundsLeft;
+        document.getElementById("rounds").innerHTML = "Round 1 of " + JSON.parse(data).roundsLeft;
+        document.getElementById("leaderboard").style.display = "block";
         timeUntilRoundEndForced = 150;
-        roundCountDownTimer=setTimeout(roundEndCountDown, 1000);
+        roundCountDownTimer = setTimeout(roundEndCountDown, 1000);
         runStopWatch();
 
     });
@@ -490,11 +492,11 @@ function startGame() {
     });
     socket.on("start_next_round", function(data) {
         generateMaze(JSON.parse(data).maze)
-        document.getElementById("rounds").innerHTML="Round "+ ((numberOfRounds-JSON.parse(data).roundsLeft)+1) +" of "+numberOfRounds;
+        document.getElementById("rounds").innerHTML = "Round " + ((numberOfRounds - JSON.parse(data).roundsLeft) + 1) + " of " + numberOfRounds;
         isRoundOngoing = true;
         timeUntilRoundEndForced = 150;
         clearTimeout(roundCountDownTimer);
-        roundCountDownTimer=setTimeout(roundEndCountDown, 1000);
+        roundCountDownTimer = setTimeout(roundEndCountDown, 1000);
         var enemyPlayerList = JSON.parse(data).playerList;
         var completePlayerList = JSON.parse(data).completePlayerList;
         initializeEnemies(enemyPlayerList);
