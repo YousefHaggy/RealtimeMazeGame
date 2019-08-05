@@ -211,7 +211,7 @@ function updateLeaderBoard(playerList) {
         var node = document.getElementById("leaderboard-entry").cloneNode(true);
         node.id = "entry" + playerList[i].playerName;
         node.getElementsByTagName('div')[1].innerHTML = "#" + (i + 1) + " " + playerList[i].playerName;
-        node.getElementsByTagName('div')[2].innerHTML = "Score: " + playerList[i].score;
+        node.getElementsByTagName('div')[2].innerHTML =playerList[i].score;
         if (playerList[i].playerID == player.id) {
             node.style.color = "#f7dc6f";
         node.getElementsByTagName('div')[0].style.backgroundColor="rgb(0,0,255)";

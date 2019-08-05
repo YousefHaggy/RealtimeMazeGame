@@ -55,8 +55,11 @@ class Bot(Player):
 		firstName= random.choice(ROOMS[self.roomID].botNames)
 		ROOMS[self.roomID].botNames.remove(firstName)
 		secondName =random.choice(ROOMS[self.roomID].botNames)
+		number=""
+		if random.randint(1,2) ==2:
+			number=random.randint(10,999)
 		ROOMS[self.roomID].botNames.remove(secondName)
-		return firstName+random.choice(["_"," ",""])+secondName+str(random.randint(10,999))
+		return firstName+random.choice(["_"," ",""])+secondName+str(number)
 class Room():
 	def __init__(self,seed,maze):
 		self.playerList=[];
@@ -127,7 +130,7 @@ def finishReached(player,roomID,sid=""):
 		else:
 			message=ROOMS[roomID].playerList[0].playerName
 			socketio.emit("game_won",message,room=roomID)
-			close_room(roomID)
+			socketio.close_room(roomID)
 			del ROOMS[roomID]
 			#del PLAYERS[request.sid]
 @app.route("/")
@@ -161,7 +164,7 @@ def handleConnect(data):
 		ROOMS[seed]=room;
 		room.addBots()
 		join_room(seed)
-		eventlet.spawn_after(5,queueOver,seed)
+		eventlet.spawn_after(4,queueOver,seed)
 	print("new connect event " +str(PLAYERS[request.sid].roomID))
 	emit('join_room',{'room':seed,'playerID':request.sid,'numberOfPlayers':len(room.playerList)})
 @socketio.on('disconnect')
@@ -224,7 +227,7 @@ def startNextRound(roomID):
 		ROOMS[roomID].maze=generateMaze()
 		ROOMS[roomID].solutions=[generateMazeSolution(ROOMS[roomID].maze) for i in range(1,20)][16:20]
 		random.shuffle(ROOMS[roomID].solutions)
-		ROOMS[roomID].solutions.append(generateMazeSolution(maze,"medium"))
+		ROOMS[roomID].solutions.append(generateMazeSolution(ROOMS[roomID].maze,"medium"))
 		ROOMS[roomID].solutions.append(generateMazeSolution(ROOMS[roomID].maze,"hard"))
 		ROOMS[roomID].playersDoneRacing=0
 		ROOMS[roomID].roundStartTime=datetime.utcnow()
