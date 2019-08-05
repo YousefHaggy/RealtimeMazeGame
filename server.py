@@ -66,6 +66,7 @@ class Room():
 		self.maze=maze
 		self.solutions=[generateMazeSolution(maze) for i in range(1,20)][16:20]
 		random.shuffle(self.solutions)
+		self.solutions.append(generateMazeSolution(maze,"medium"))
 		self.solutions.append(generateMazeSolution(maze,"hard"))
 		self.roundsLeft=3
 		self.playersDoneRacing=0;
@@ -223,6 +224,7 @@ def startNextRound(roomID):
 		ROOMS[roomID].maze=generateMaze()
 		ROOMS[roomID].solutions=[generateMazeSolution(ROOMS[roomID].maze) for i in range(1,20)][16:20]
 		random.shuffle(ROOMS[roomID].solutions)
+		ROOMS[roomID].solutions.append(generateMazeSolution(maze,"medium"))
 		ROOMS[roomID].solutions.append(generateMazeSolution(ROOMS[roomID].maze,"hard"))
 		ROOMS[roomID].playersDoneRacing=0
 		ROOMS[roomID].roundStartTime=datetime.utcnow()

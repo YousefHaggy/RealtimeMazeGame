@@ -13,6 +13,7 @@ var playerCount = 1;
 var canvas;
 var isConnected = false;
 var socket;
+var movementTimer;
 if (document.domain == "localhost") {
     socket = io('ws://' + document.domain + ":5000", {
         transports: ['websocket']
@@ -194,10 +195,11 @@ function Hud() {
                 text("Wating for other players... " + timeUntilRoundEndForced + " seconds", canvas.width / 2, (canvas.height / 2) + fontSize + 5);
             }
 
-         else if (!isRoundOngoing && isGameStarted) {
+
+    }
+    if (!isRoundOngoing && isGameStarted) {
             text("Next Rounds starts in " + timeUntilNextRound, canvas.width / 2, (canvas.height / 2) + fontSize + 5);
         }
-    }
 
     }
 }
@@ -354,11 +356,21 @@ function updatePlayerPosition(direction) {
     });
 }
 //Player controls
+setInterval(function(){    kd.tick();
+},100)
+function movementTick()
+{
+    kd.tick();
+    movementTimer=setTimeout(movementTick,100)
+}
+$(document).keypress(function(){
+    clearTimeout(movementTimer);
+    movementTick();
+});
+$(document).keyup(function(){
+    clearTimeout(movementTimer);
+});
 kd.run(function() {
-    frameCount += 1
-    if (frameCount >= 8) {
-        frameCount = 0;
-        kd.tick();
         kd.LEFT.down(function() {
             updatePlayerPosition("left")
         });
@@ -388,7 +400,7 @@ kd.run(function() {
             updatePlayerPosition("bottom")
         });
     }
-});
+);
 
 $(document).keydown(function(e) {
     if (e.keyCode == 32) {
@@ -456,6 +468,7 @@ function startGame() {
         timeUntilRoundEndForced = 150;
         roundCountDownTimer = setTimeout(roundEndCountDown, 1000);
         runStopWatch();
+        movementTimer=setTimeout(movementTick,100)
 
     });
     socket.on('able_to_phase', function() {

@@ -98,9 +98,14 @@ def generateMazeSolution(maze,difficulty="easy"):
 	steps=[]
 	stack=[]
 	current=maze[0]
-	#stack.append(current)
+	hasPassedStepThreshold=False
+	addStep=True
+	#steps.append(current)
 	while not reachedEndOfMaze:
 		current.visited=True
+		if addStep:
+			steps.append(current)
+		addStep=True
 		neighbor=current.getRandomNeighborForSolve(maze)
 		if neighbor:
 			if neighbor.row ==rows-1 and neighbor.col==cols-1:
@@ -108,15 +113,21 @@ def generateMazeSolution(maze,difficulty="easy"):
 				reachedEndOfMaze=True
 				return steps
 			neighbor.visited=True
-			steps.append(current)
 			stack.append(current)
 			current=neighbor
 		else:
 			current=stack.pop()
 			if difficulty=="easy":
-				steps.append(current)
-			else:
+				#steps.append(current)
+				pass
+			elif difficulty=="hard":
+				addStep=False;
 				steps.pop()
+			elif difficulty=="medium" and hasPassedStepThreshold:
+				addStep=False;
+				steps.pop()
+		if len(steps)>250:
+			hasPassedStepThreshold=True
 	return steps
 def updatePlayer(player,direction,maze):
 	currentRow=player.row
