@@ -411,11 +411,12 @@ function startGame() {
     socket.on('join_room', function(msg) {
         isConnected=true;
         localRequestID = msg.playerID;
+        playerCount=msg.numberOfPlayers
+        document.getElementById("playerCount").innerHTML = playerCount + "/10";
 
 
     });
     socket.on('room_found', function(data) {
-        playerCount += 1;
         document.getElementById("playerCount").innerHTML = data + "/10";
         secondsRemaining = 3
         document.getElementById("queue").innerHTML = "Starting round 1 in " + secondsRemaining;
