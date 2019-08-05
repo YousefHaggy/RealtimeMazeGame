@@ -186,16 +186,18 @@ function Hud() {
         if (winningPlayerName != "") {
 
             text(winningPlayerName + " has won the game", canvas.width / 2, canvas.height / 2);
-        } else if (player.finishedRace) {
+        } 
+        else if (player.finishedRace) {
 
             text("You finished the round in " + player.completedRaceTime + " seconds...", canvas.width / 2, canvas.height / 2);
             if (isRoundOngoing) {
                 text("Wating for other players... " + timeUntilRoundEndForced + " seconds", canvas.width / 2, (canvas.height / 2) + fontSize + 5);
             }
 
-        } else if (!isRoundOngoing && isGameStarted) {
+         else if (!isRoundOngoing && isGameStarted) {
             text("Next Rounds starts in " + timeUntilNextRound, canvas.width / 2, (canvas.height / 2) + fontSize + 5);
         }
+    }
 
     }
 }
