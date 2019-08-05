@@ -89,7 +89,7 @@ function setup() {
         newWidth = newHeight / canvasRatio;
         w = newHeight / 35;
     } else {
-        newWidth = window.innerWidth * .75;
+        newWidth = window.innerWidth * .65;
         newHeight = newWidth * canvasRatio;
         w = newHeight / 35;
     }
