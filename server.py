@@ -14,7 +14,7 @@ socketio=SocketIO(app)
 ROOMS={}
 PLAYERS={}
 seedList=[]
-botNames=["Monkey","Pants","Unicorn","Noob","TTV","Bert","Banana","Master","Overlord"]
+botNames=["Monkey","Pants","Unicorn","Noob","TTV","Bert","Banana","Master","Overlord","Booty","Blaster","Icy"]
 class Player():
 	def __init__(self,col,row,playerID,playerName="unnamed",roomID="unassigned"):
 		self.col=col
@@ -51,7 +51,7 @@ class Bot(Player):
 			socketio.emit("players_updated",message,room=self.roomID)
 			#t.start();
 	def generateName(self):
-		return random.choice(botNames)+random.choice(botNames)+str(random.randint(100,999))
+		return random.choice(botNames)+random.choice(botNames)+str(random.randint(10,999))
 class Room():
 	def __init__(self,seed,maze):
 		self.playerList=[];
@@ -75,7 +75,7 @@ class Room():
 	def addBots(self):
 		numberOfBots=10-len(self.playerList)
 		if numberOfBots>0:
-			for i in range(0,random.randint(1,3)):
+			for i in range(0,random.randint(2,4)):
 				self.add_player(Bot(0,0,random.randint(1,10000000),("bot #"+str(i)),self.seed))
 	def moveAllBots(self):
 		if self.isRoundOnGoing:
@@ -84,7 +84,7 @@ class Room():
 					player.moveBot()
 					if player.row==34 and player.col==39:
 						finishReached(player,self.seed)
-			eventlet.spawn_after(.05,self.moveAllBots)
+			eventlet.spawn_after(.1,self.moveAllBots)
 	def serialize(self,requestSID="none"):
 		return{
 		'playerList':[player.serialize() for player in self.playerList if player.playerID != requestSID],
