@@ -135,7 +135,7 @@ def updatePlayer(player,direction,maze):
 	if direction == "top":
 		if not maze[index(currentRow-1,currentCol)].walls[2] and not maze[index(currentRow,currentCol)].walls[0]:
 			player.row=player.row-1
-		elif player.isAbleToPhase and player.row-1>0:
+		elif player.isAbleToPhase and player.row-1>=0:
 			player.row=player.row-1
 			player.isAbleToPhase=False
 	elif direction== "bottom":
@@ -147,7 +147,7 @@ def updatePlayer(player,direction,maze):
 	elif  direction=="left":
 		if not maze[index(currentRow,currentCol-1)].walls[1] and not maze[index(currentRow,currentCol)].walls[3]:
 			player.col=player.col-1
-		elif player.isAbleToPhase and player.col-1>0:
+		elif player.isAbleToPhase and player.col-1>=0:
 			player.col=player.col-1
 			player.isAbleToPhase=False
 	elif direction=="right":
