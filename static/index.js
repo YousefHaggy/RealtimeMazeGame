@@ -106,8 +106,6 @@ function windowResized() {
     mazeHeight = 700;
     mazeWidth = 800;
     w = 20
-    oldHeight=canvas.height;
-    oldWidth=canvas.width;
     var canvasRatio = mazeHeight / mazeWidth;
     var windowRatio = window.innerHeight / (window.innerWidth - 255);
     var newHeight;
@@ -117,7 +115,7 @@ function windowResized() {
         newWidth = newHeight / canvasRatio;
         w = newHeight / 35;
     } else {
-        newWidth = window.innerWidth * .60
+        newWidth = window.innerWidth * .65
         newHeight = newWidth * canvasRatio;
         w = newHeight / 35;
     }
@@ -125,10 +123,10 @@ function windowResized() {
     //newHeight=Math.floor(newHeight);
 
     var c = document.getElementById("defaultCanvas0");
-    percentChangeInHeight=Math.round(newHeight/oldHeight);
-    percentChangeInWidth=Math.round(newWidth/oldWidth);
-    c.width = c.width*percentChangeInWidth;
-    c.height = c.height*percentChangeInHeight;
+    heightToStyleHeightRatio=Math.round(c.height/c.style.height.replace("px",""));
+    widthToStyleWidthRatio=Math.round(c.width/c.style.width.replace("px",""));
+    c.width = newWidth*widthToStyleWidthRatio;
+    c.height = newHeight*heightToStyleHeightRatio;
     c.style.width = newWidth + "px";
     c.style.height = newHeight + "px";
     canvas.width = newWidth;
